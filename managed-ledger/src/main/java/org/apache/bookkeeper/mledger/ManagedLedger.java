@@ -519,5 +519,6 @@ public interface ManagedLedger {
     /**
      * Roll current ledger if it is full
      */
+    @Deprecated
     void rollCurrentLedgerIfFull();
 }
