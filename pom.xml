@@ -1,151 +1,152 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<!--
+	<?xml version="1.0" encoding="UTF-8"?>
+	<!--
 
-    Licensed to the Apache Software Foundation (ASF) under one
-    or more contributor license agreements.  See the NOTICE file
-    distributed with this work for additional information
-    regarding copyright ownership.  The ASF licenses this file
-    to you under the Apache License, Version 2.0 (the
-    "License"); you may not use this file except in compliance
-    with the License.  You may obtain a copy of the License at
+	    Licensed to the Apache Software Foundation (ASF) under one
+	    or more contributor license agreements.  See the NOTICE file
+	    distributed with this work for additional information
+	    regarding copyright ownership.  The ASF licenses this file
+	    to you under the Apache License, Version 2.0 (the
+	    "License"); you may not use this file except in compliance
+	    with the License.  You may obtain a copy of the License at
 
-      http://www.apache.org/licenses/LICENSE-2.0
+	      http://www.apache.org/licenses/LICENSE-2.0
 
-    Unless required by applicable law or agreed to in writing,
-    software distributed under the License is distributed on an
-    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
-    KIND, either express or implied.  See the License for the
-    specific language governing permissions and limitations
-    under the License.
+	    Unless required by applicable law or agreed to in writing,
+	    software distributed under the License is distributed on an
+	    "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY
+	    KIND, either express or implied.  See the License for the
+	    specific language governing permissions and limitations
+	    under the License.
 
--->
-<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
-  <modelVersion>4.0.0</modelVersion>
-  <packaging>pom</packaging>
-  <parent>
-    <groupId>org.apache</groupId>
-    <artifactId>apache</artifactId>
-    <version>18</version>
-  </parent>
+	-->
+	<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	  xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+	  <modelVersion>4.0.0</modelVersion>
+	  <packaging>pom</packaging>
+	  <parent>
+	    <groupId>org.apache</groupId>
+	    <artifactId>apache</artifactId>
+	    <version>18</version>
+	  </parent>
 
-  <groupId>org.apache.pulsar</groupId>
-  <artifactId>pulsar</artifactId>
+	  <groupId>org.apache.pulsar</groupId>
+	  <artifactId>pulsar</artifactId>
 
-  <version>2.7.2_1.0.0</version>
+	  <version>2.7.2_1.0.0</version>
 
-  <name>Pulsar</name>
-  <description>Pulsar is a distributed pub-sub messaging platform with a very
-flexible messaging model and an intuitive client API.</description>
-  <url>https://github.com/apache/pulsar</url>
+	  <name>Pulsar</name>
+	  <description>Pulsar is a distributed pub-sub messaging platform with a very
+	flexible messaging model and an intuitive client API.</description>
+	  <url>https://github.com/apache/pulsar</url>
 
-  <organization>
-    <name>Apache Software Foundation</name>
-    <url>http://www.apache.org/</url>
-  </organization>
-  <inceptionYear>2017</inceptionYear>
+	  <organization>
+	    <name>Apache Software Foundation</name>
+	    <url>http://www.apache.org/</url>
+	  </organization>
+	  <inceptionYear>2017</inceptionYear>
 
-  <developers>
-    <developer>
-      <organization>Apache Pulsar developers</organization>
-      <organizationUrl>http://pulsar.apache.org/</organizationUrl>
-    </developer>
-  </developers>
+	  <developers>
+	    <developer>
+	      <organization>Apache Pulsar developers</organization>
+	      <organizationUrl>http://pulsar.apache.org/</organizationUrl>
+	    </developer>
+	  </developers>
 
-  <licenses>
-    <license>
-      <name>Apache License, Version 2.0</name>
-      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
-      <distribution>repo</distribution>
-    </license>
-  </licenses>
+	  <licenses>
+	    <license>
+	      <name>Apache License, Version 2.0</name>
+	      <url>https://www.apache.org/licenses/LICENSE-2.0.txt</url>
+	      <distribution>repo</distribution>
+	    </license>
+	  </licenses>
 
-  <scm>
-    <url>https://github.com/apache/pulsar</url>
-    <connection>scm:git:https://github.com/apache/pulsar.git</connection>
-    <developerConnection>scm:git:ssh://git@github.com:apache/pulsar.git</developerConnection>
-  </scm>
+	  <scm>
+	    <url>https://github.com/apache/pulsar</url>
+	    <connection>scm:git:https://github.com/apache/pulsar.git</connection>
+	    <developerConnection>scm:git:ssh://git@github.com:apache/pulsar.git</developerConnection>
+	  </scm>
 
-  <ciManagement>
-    <system>Travis</system>
-    <url>https://travis-ci.org/apache/pulsar</url>
-  </ciManagement>
+	  <ciManagement>
+	    <system>Travis</system>
+	    <url>https://travis-ci.org/apache/pulsar</url>
+	  </ciManagement>
 
-  <issueManagement>
-    <system>Github</system>
-    <url>https://github.com/apache/pulsar/issues</url>
-  </issueManagement>
+	  <issueManagement>
+	    <system>Github</system>
+	    <url>https://github.com/apache/pulsar/issues</url>
+	  </issueManagement>
 
-  <properties>
-    <!--config keys to congiure test selection -->
-    <include>*</include>
-    <exclude/>
-    <groups/>
-    <excludedGroups/>
+	  <properties>
+	    <!--config keys to congiure test selection -->
+	    <include>*</include>
+	    <exclude/>
+	    <groups/>
+	    <excludedGroups/>
 
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-    <redirectTestOutputToFile>true</redirectTestOutputToFile>
-    <testReuseFork>true</testReuseFork>
-    <testForkCount>4</testForkCount>
-    <testRealAWS>false</testRealAWS>
-    <testRetryCount>1</testRetryCount>
-    <docker.organization>apachepulsar</docker.organization>
+	    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+	    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+	    <redirectTestOutputToFile>true</redirectTestOutputToFile>
+	    <testReuseFork>true</testReuseFork>
+	    <testForkCount>4</testForkCount>
+	    <testRealAWS>false</testRealAWS>
+	    <testRetryCount>1</testRetryCount>
+	    <docker.organization>apachepulsar</docker.organization>
 
-    <!-- pin the protobuf-shaded version to make the pulsar build friendly to intellij -->
-    <pulsar.protobuf.shaded.version>2.1.0-incubating</pulsar.protobuf.shaded.version>
+	    <!-- pin the protobuf-shaded version to make the pulsar build friendly to intellij -->
+	    <pulsar.protobuf.shaded.version>2.1.0-incubating</pulsar.protobuf.shaded.version>
 
-    <!-- apache commons -->
-    <commons-compress.version>1.19</commons-compress.version>
+	    <!-- apache commons -->
+	    <commons-compress.version>1.19</commons-compress.version>
 
-    <bookkeeper.version>4.12.0</bookkeeper.version>
-    <zookeeper.version>3.5.7</zookeeper.version>
-    <netty.version>4.1.60.Final</netty.version>
-    <netty-tc-native.version>2.0.36.Final</netty-tc-native.version>
-    <jetty.version>9.4.39.v20210325</jetty.version>
-    <jersey.version>2.31</jersey.version>
-    <athenz.version>1.10.9</athenz.version>
-    <prometheus.version>0.5.0</prometheus.version>
-    <aspectj.version>1.9.2</aspectj.version>
-    <vertx.version>3.5.3</vertx.version>
-    <rocksdb.version>6.10.2</rocksdb.version>
-    <slf4j.version>1.7.25</slf4j.version>
-    <commons.collections.version>3.2.2</commons.collections.version>
-    <log4j2.version>2.10.0</log4j2.version>
-    <bouncycastle.version>1.68</bouncycastle.version>
-    <bouncycastlefips.version>1.0.2</bouncycastlefips.version>
-    <jackson.version>2.11.1</jackson.version>
-    <jackson.databind.version>2.11.1</jackson.databind.version>
-    <reflections.version>0.9.11</reflections.version>
-    <swagger.version>1.5.21</swagger.version>
-    <puppycrawl.checkstyle.version>8.37</puppycrawl.checkstyle.version>
-    <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
-    <typetools.version>0.5.0</typetools.version>
-    <protobuf2.version>2.4.1</protobuf2.version>
-    <protobuf3.version>3.11.4</protobuf3.version>
-    <protoc3.version>${protobuf3.version}</protoc3.version>
-    <grpc.version>1.18.0</grpc.version>
-    <protoc-gen-grpc-java.version>${grpc.version}</protoc-gen-grpc-java.version>
-    <gson.version>2.8.6</gson.version>
-    <sketches.version>0.8.3</sketches.version>
-    <hbc-core.version>2.2.0</hbc-core.version>
-    <cassandra-driver-core.version>3.6.0</cassandra-driver-core.version>
-    <aerospike-client.version>4.4.8</aerospike-client.version>
-    <kafka-client.version>2.3.0</kafka-client.version>
-    <rabbitmq-client.version>5.1.1</rabbitmq-client.version>
-    <aws-sdk.version>1.11.774</aws-sdk.version>
-    <avro.version>1.9.1</avro.version>
-    <joda.version>2.10.1</joda.version>
-    <jclouds.version>2.2.1</jclouds.version>
-    <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
-    <mysql-jdbc.version>8.0.11</mysql-jdbc.version>
-    <postgresql-jdbc.version>42.2.12</postgresql-jdbc.version>
-    <clickhouse-jdbc.version>0.2.4</clickhouse-jdbc.version>
-    <mariadb-jdbc.version>2.6.0</mariadb-jdbc.version>
-    <hdfs-offload-version3>3.2.0</hdfs-offload-version3>
-    <org.eclipse.jetty-hdfs-offload>9.3.24.v20180605</org.eclipse.jetty-hdfs-offload>
-    <elasticsearch.version>7.9.1</elasticsearch.version>
-    <presto.version>332</presto.version>
+	    <bookkeeper.version>4.12.0</bookkeeper.version>
+	    <zookeeper.version>3.5.7</zookeeper.version>
+	    <netty.version>4.1.60.Final</netty.version>
+	    <netty-tc-native.version>2.0.36.Final</netty-tc-native.version>
+	    <jetty.version>9.4.39.v20210325</jetty.version>
+	    <jersey.version>2.31</jersey.version>
+	    <athenz.version>1.10.9</athenz.version>
+	    <prometheus.version>0.5.0</prometheus.version>
+	    <aspectj.version>1.9.2</aspectj.version>
+	    <vertx.version>3.5.3</vertx.version>
+	    <rocksdb.version>6.10.2</rocksdb.version>
+	    <slf4j.version>1.7.25</slf4j.version>
+	    <commons.collections.version>3.2.2</commons.collections.version>
+	    <log4j2.version>2.10.0</log4j2.version>
+	    <bouncycastle.version>1.68</bouncycastle.version>
+	    <bouncycastlefips.version>1.0.2</bouncycastlefips.version>
+	    <jackson.version>2.11.1</jackson.version>
+	    <jackson.databind.version>2.11.1</jackson.databind.version>
+	    <reflections.version>0.9.11</reflections.version>
+	    <swagger.version>1.5.21</swagger.version>
+	    <puppycrawl.checkstyle.version>8.37</puppycrawl.checkstyle.version>
+	    <dockerfile-maven.version>1.4.13</dockerfile-maven.version>
+	    <typetools.version>0.5.0</typetools.version>
+	    <protobuf2.version>2.4.1</protobuf2.version>
+	    <protobuf3.version>3.11.4</protobuf3.version>
+	    <protoc3.version>${protobuf3.version}</protoc3.version>
+	    <grpc.version>1.18.0</grpc.version>
+	    <protoc-gen-grpc-java.version>${grpc.version}</protoc-gen-grpc-java.version>
+	    <gson.version>2.8.6</gson.version>
+	    <sketches.version>0.8.3</sketches.version>
+	    <hbc-core.version>2.2.0</hbc-core.version>
+	    <cassandra-driver-core.version>3.6.0</cassandra-driver-core.version>
+	    <aerospike-client.version>4.4.8</aerospike-client.version>
+	    <kafka-client.version>2.3.0</kafka-client.version>
+	    <rabbitmq-client.version>5.1.1</rabbitmq-client.version>
+	    <aws-sdk.version>1.11.774</aws-sdk.version>
+	    <avro.version>1.9.1</avro.version>
+	    <joda.version>2.10.1</joda.version>
+	    <jclouds.version>2.2.1</jclouds.version>
+	    <sqlite-jdbc.version>3.8.11.2</sqlite-jdbc.version>
+	    <mysql-jdbc.version>8.0.11</mysql-jdbc.version>
+	    <postgresql-jdbc.version>42.2.12</postgresql-jdbc.version>
+	    <clickhouse-jdbc.version>0.2.4</clickhouse-jdbc.version>
+	    <mariadb-jdbc.version>2.6.0</mariadb-jdbc.version>
+	    <hdfs-offload-version3>3.2.0</hdfs-offload-version3>
+	    <org.eclipse.jetty-hdfs-offload>9.3.24.v20180605</org.eclipse.jetty-hdfs-offload>
+	    <elasticsearch.version>7.9.1</elasticsearch.version>
+	    <presto.version>334</presto.version>
+	    <flink.version>1.6.0</flink.version>
     <scala.binary.version>2.11</scala.binary.version>
     <scala-library.version>2.11.12</scala-library.version>
     <debezium.version>1.0.0.Final</debezium.version>
@@ -482,7 +483,11 @@ flexible messaging model and an intuitive client API.</description>
       <dependency>
         <groupId>org.apache.commons</groupId>
         <artifactId>commons-lang3</artifactId>
+<<<<<<< HEAD
         <version>${commons-lang3.version}</version>
+=======
+        <version>3.9</version>
+>>>>>>> da22685e074... upgrade presto version to 334 and JDK11
       </dependency>
 
       <dependency>
@@ -1082,8 +1087,8 @@ flexible messaging model and an intuitive client API.</description>
       <plugin>
         <artifactId>maven-compiler-plugin</artifactId>
         <configuration>
-          <source>1.8</source>
-          <target>1.8</target>
+          <source>8</source>
+          <target>11</target>
           <encoding>UTF-8</encoding>
           <showDeprecation>true</showDeprecation>
           <showWarnings>true</showWarnings>
