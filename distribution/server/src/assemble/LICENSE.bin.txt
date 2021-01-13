@@ -355,7 +355,7 @@ The Apache Software License, Version 2.0
     - commons-logging-commons-logging-1.1.1.jar
     - org.apache.commons-commons-collections4-4.1.jar
     - org.apache.commons-commons-compress-1.19.jar
-    - org.apache.commons-commons-lang3-3.6.jar
+    - org.apache.commons-commons-lang3-3.9.jar
  * Netty
     - io.netty-netty-buffer-4.1.60.Final.jar
     - io.netty-netty-codec-4.1.60.Final.jar
@@ -569,8 +569,10 @@ CDDL-1.1 -- licenses/LICENSE-CDDL-1.1.txt
  * Mimepull -- org.jvnet.mimepull-mimepull-1.9.13.jar
 
 Eclipse Distribution License 1.0 -- licenses/LICENSE-EDL-1.0.txt
- * Jakarta Activation -- jakarta.activation-jakarta.activation-api-1.2.1.jar
- * Jakarta XML Binding -- jakarta.xml.bind-jakarta.xml.bind-api-2.3.2.jar
+ * Jakarta Activation -- com.sun.activation-jakarta.activation-1.2.2.jar
+ * Jakarta XML Binding
+    - jakarta.activation-jakarta.activation-api-1.2.2.jar
+    - jakarta.xml.bind-jakarta.xml.bind-api-2.3.3.jar
 
 Eclipse Public License 1.0 -- licenses/LICENSE-AspectJ.txt
  * AspectJ
