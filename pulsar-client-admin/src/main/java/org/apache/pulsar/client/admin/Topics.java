@@ -1656,7 +1656,15 @@ public interface Topics {
      * @throws PulsarAdminException
      *             Unexpected error
      */
-    int getMessageTTL(String topic) throws PulsarAdminException;
+    Integer getMessageTTL(String topic) throws PulsarAdminException;
+
+    /**
+     * Get message TTL applied for a topic.
+     * @param topic
+     * @return
+     * @throws PulsarAdminException
+     */
+    Integer getMessageTTL(String topic, boolean applied) throws PulsarAdminException;
 
     /**
      * Remove message TTL for a topic.
