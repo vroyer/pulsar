@@ -219,6 +219,8 @@ public class KubernetesRuntimeTest {
         workerConfig.setAuthenticationEnabled(false);
         workerConfig.setDownloadDirectory(downloadDirectory);
 
+        manifestCustomizer.ifPresent(runtimeCustomizer -> runtimeCustomizer.initialize(Optional.ofNullable(workerConfig.getRuntimeCustomizerConfig()).orElse(Collections.emptyMap())));
+
         factory.initialize(workerConfig, null, new TestSecretProviderConfigurator(), Optional.empty(), manifestCustomizer);
         doNothing().when(factory).setupClient();
         
@@ -778,41 +780,7 @@ public class KubernetesRuntimeTest {
     public void testBasicKubernetesManifestCustomizer() throws Exception {
         InstanceConfig config = createJavaInstanceConfig(FunctionDetails.Runtime.JAVA, false);
         config.setFunctionDetails(createFunctionDetails(FunctionDetails.Runtime.JAVA, false, (fb) -> {
-            JsonObject configObj = new JsonObject();
-            configObj.addProperty("jobNamespace", "custom-ns");
-            configObj.addProperty("jobName", "custom-name");
-
-            JsonObject extraAnn = new JsonObject();
-            extraAnn.addProperty("annotation", "test");
-            configObj.add("extraAnnotations", extraAnn);
-
-            JsonObject extraLabel = new JsonObject();
-            extraLabel.addProperty("label", "test");
-            configObj.add("extraLabels", extraLabel);
-
-            JsonObject nodeLabels = new JsonObject();
-            nodeLabels.addProperty("selector", "test");
-            configObj.add("nodeSelectorLabels", nodeLabels);
-
-            JsonArray tolerations = new JsonArray();
-            JsonObject toleration = new JsonObject();
-            toleration.addProperty("key", "test");
-            toleration.addProperty("value", "test");
-            toleration.addProperty("effect", "test");
-            tolerations.add(toleration);
-            configObj.add("tolerations", tolerations);
-
-            JsonObject resourceRequirements = new JsonObject();
-            JsonObject requests = new JsonObject();
-            JsonObject limits = new JsonObject();
-            requests.addProperty("cpu", 1);
-            requests.addProperty("memory", "4G");
-            limits.addProperty("cpu", 2);
-            limits.addProperty("memory", "8G");
-            resourceRequirements.add("requests", requests);
-            resourceRequirements.add("limits", limits);
-            configObj.add("resourceRequirements", resourceRequirements);
-
+            JsonObject configObj = createRuntimeCustomizerConfig();
             return fb.setCustomRuntimeOptions(configObj.toString());
         }));
 
@@ -1066,4 +1034,92 @@ public class KubernetesRuntimeTest {
         verifyJavaInstance(config, pulsarRootDir + "/instances/deps", false, factory.getDownloadDirectory());
     }
 
+    @Test
+    public void testBasicKubernetesManifestCustomizerWithRuntimeCustomizerConfig() throws Exception {
+        InstanceConfig config = createJavaInstanceConfig(FunctionDetails.Runtime.JAVA, false);
+
+        Map<String, Object> configs = new Gson().fromJson(createRuntimeCustomizerConfig(), HashMap.class);
+
+        factory = createKubernetesRuntimeFactory(null, 10, 1.0, 1.0,
+                "org.apache.pulsar.functions.runtime.kubernetes.BasicKubernetesManifestCustomizer", configs);
+
+        verifyJavaInstance(config, pulsarRootDir + "/instances/deps", false);
+        KubernetesRuntime container = factory.createContainer(config, userJarFile, userJarFile, 30l);
+        V1StatefulSet spec = container.createStatefulSet();
+        assertEquals(spec.getMetadata().getAnnotations().get("annotation"), "test");
+        assertEquals(spec.getMetadata().getLabels().get("label"), "test");
+        assertEquals(spec.getSpec().getTemplate().getSpec().getNodeSelector().get("selector"), "test");
+        List<V1Toleration> tols = spec.getSpec().getTemplate().getSpec().getTolerations();
+        // we add three by default, plus our custom
+        assertEquals(tols.size(), 4);
+        assertEquals(tols.get(3).getKey(), "test");
+        assertEquals(tols.get(3).getValue(), "test");
+        assertEquals(tols.get(3).getEffect(), "test");
+
+        V1Service serviceSpec = container.createService();
+        assertEquals(serviceSpec.getMetadata().getNamespace(), "custom-ns");
+        assertEquals(serviceSpec.getMetadata().getName(), "custom-name-2deb2c2b");
+        assertEquals(serviceSpec.getMetadata().getAnnotations().get("annotation"), "test");
+        assertEquals(serviceSpec.getMetadata().getLabels().get("label"), "test");
+
+        List<V1Container> containers = spec.getSpec().getTemplate().getSpec().getContainers();
+        containers.forEach(c -> {
+            V1ResourceRequirements resources = c.getResources();
+            Map<String, Quantity> limits = resources.getLimits();
+            Map<String, Quantity> requests = resources.getRequests();
+            assertEquals(requests.get("cpu").getNumber(), new BigDecimal(1) );
+            assertEquals(limits.get("cpu").getNumber(), new BigDecimal(2) );
+            assertEquals(requests.get("memory").getNumber(), new BigDecimal(4000000000L) );
+            assertEquals(limits.get("memory").getNumber(), new BigDecimal(8000000000L) );
+        });
+
+    }
+
+
+    @Test
+    public void testBasicKubernetesManifestCustomizerWithRuntimeCustomizerConfigOverwrite() throws Exception {
+        InstanceConfig config = createJavaInstanceConfig(FunctionDetails.Runtime.JAVA, false);
+        config.setFunctionDetails(createFunctionDetails(FunctionDetails.Runtime.JAVA, false, (fb) -> {
+            JsonObject configObj = new JsonObject();
+            configObj.addProperty("jobNamespace", "custom-ns-overwrite");
+            configObj.addProperty("jobName", "custom-name-overwrite");
+            return fb.setCustomRuntimeOptions(configObj.toString());
+        }));
+
+        Map<String, Object> configs = new Gson().fromJson(createRuntimeCustomizerConfig(), HashMap.class);
+
+        factory = createKubernetesRuntimeFactory(null, 10, 1.0, 1.0,
+                "org.apache.pulsar.functions.runtime.kubernetes.BasicKubernetesManifestCustomizer", configs);
+
+        verifyJavaInstance(config, pulsarRootDir + "/instances/deps", false);
+        KubernetesRuntime container = factory.createContainer(config, userJarFile, userJarFile, 30l);
+        V1StatefulSet spec = container.createStatefulSet();
+        assertEquals(spec.getMetadata().getAnnotations().get("annotation"), "test");
+        assertEquals(spec.getMetadata().getLabels().get("label"), "test");
+        assertEquals(spec.getSpec().getTemplate().getSpec().getNodeSelector().get("selector"), "test");
+        List<V1Toleration> tols = spec.getSpec().getTemplate().getSpec().getTolerations();
+        // we add three by default, plus our custom
+        assertEquals(tols.size(), 4);
+        assertEquals(tols.get(3).getKey(), "test");
+        assertEquals(tols.get(3).getValue(), "test");
+        assertEquals(tols.get(3).getEffect(), "test");
+
+        V1Service serviceSpec = container.createService();
+        assertEquals(serviceSpec.getMetadata().getNamespace(), "custom-ns-overwrite");
+        assertEquals(serviceSpec.getMetadata().getName(), "custom-name-overwrite-7757f1ff");
+        assertEquals(serviceSpec.getMetadata().getAnnotations().get("annotation"), "test");
+        assertEquals(serviceSpec.getMetadata().getLabels().get("label"), "test");
+
+        List<V1Container> containers = spec.getSpec().getTemplate().getSpec().getContainers();
+        containers.forEach(c -> {
+            V1ResourceRequirements resources = c.getResources();
+            Map<String, Quantity> limits = resources.getLimits();
+            Map<String, Quantity> requests = resources.getRequests();
+            assertEquals(requests.get("cpu").getNumber(), new BigDecimal(1) );
+            assertEquals(limits.get("cpu").getNumber(), new BigDecimal(2) );
+            assertEquals(requests.get("memory").getNumber(), new BigDecimal(4000000000L) );
+            assertEquals(limits.get("memory").getNumber(), new BigDecimal(8000000000L) );
+        });
+
+    }
 }
