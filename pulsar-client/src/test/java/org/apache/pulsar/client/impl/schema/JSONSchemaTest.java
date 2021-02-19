@@ -28,6 +28,11 @@ import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertSame;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import io.netty.buffer.ByteBuf;
+import io.netty.buffer.ByteBufAllocator;
+import java.util.Collections;
+import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -54,12 +59,6 @@ import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.testng.Assert;
 import org.testng.annotations.Test;
-import org.json.JSONException;
-
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.FOO_FIELDS;
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_NOT_ALLOW_NULL;
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_ALLOW_NULL;
-import static org.testng.Assert.assertEquals;
 
 @Slf4j
 public class JSONSchemaTest {
@@ -376,7 +375,7 @@ public class JSONSchemaTest {
     }
 
     @Test
-    public void testEncodeAndDecodeObject() throws Exception {
+    public void testEncodeAndDecodeObject() throws JsonProcessingException {
         JSONSchema<PC> jsonSchema = JSONSchema.of(SchemaDefinition.<PC>builder().withPojo(PC.class).build());
         PC pc = new PC("dell", "alienware", 2021, GPU.AMD,
                 new Seller("WA", "street", 98004));

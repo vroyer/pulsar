@@ -37,6 +37,23 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertSame;
+import static java.nio.charset.StandardCharsets.UTF_8;
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
+import static org.testng.Assert.assertTrue;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Collections;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.client.api.schema.GenericSchema;
+import org.apache.pulsar.client.api.schema.SchemaDefinition;
+import org.apache.pulsar.client.impl.schema.JSONSchema;
+import org.apache.pulsar.common.util.ObjectMapperFactory;
+import org.testng.annotations.Test;
 
 public class GenericJsonRecordTest {
 
@@ -100,7 +117,7 @@ public class GenericJsonRecordTest {
     }
 
     @Test
-    public void testEncodeAndDecodeObject() throws Exception {
+    public void testEncodeAndDecodeObject() throws JsonProcessingException {
         // test case from issue https://github.com/apache/pulsar/issues/9605
         JSONSchema<PC> jsonSchema = JSONSchema.of(SchemaDefinition.<PC>builder().withPojo(PC.class).build());
         GenericSchema genericJsonSchema = GenericJsonSchema.of(jsonSchema.getSchemaInfo());
