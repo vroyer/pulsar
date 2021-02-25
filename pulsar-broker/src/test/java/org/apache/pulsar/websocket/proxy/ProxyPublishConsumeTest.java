@@ -48,6 +48,8 @@ import javax.ws.rs.client.WebTarget;
 import javax.ws.rs.core.MediaType;
 import javax.ws.rs.core.Response;
 
+import org.apache.pulsar.broker.BrokerTestUtil;
+import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.ProducerConsumerBase;
 import org.apache.pulsar.common.policies.data.BacklogQuota;
 import org.apache.pulsar.common.stats.Metrics;
@@ -186,7 +188,7 @@ public class ProxyPublishConsumeTest extends ProducerConsumerBase {
     public void unsubscribeTest() throws Exception {
         final String namespace = "my-property/my-ns";
         final String topic = namespace + "/" + "my-topic7";
-        final String topicName = "persistent://" + topic + System.nanoTime();
+        final String topicName = BrokerTestUtil.newUniqueName("persistent://" + topic);
         admin.topics().createPartitionedTopic(topicName, 3);
 
         final String subscription = "my-sub";

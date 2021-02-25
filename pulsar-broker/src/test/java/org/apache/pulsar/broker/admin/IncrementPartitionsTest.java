@@ -22,6 +22,8 @@ import static org.testng.Assert.assertEquals;
 
 import java.util.concurrent.TimeUnit;
 
+import lombok.Cleanup;
+import org.apache.pulsar.broker.BrokerTestUtil;
 import org.apache.pulsar.broker.admin.AdminApiTest.MockedPulsarService;
 import org.apache.pulsar.broker.auth.MockedPulsarServiceBaseTest;
 import org.apache.pulsar.client.api.Consumer;
@@ -111,7 +113,8 @@ public class IncrementPartitionsTest extends MockedPulsarServiceBaseTest {
 
     @Test
     public void testIncrementPartitionsWithNoSubscriptions() throws Exception {
-        final String partitionedTopicName = "persistent://prop-xyz/use/ns1/test-topic-" + System.nanoTime();
+        final String partitionedTopicName =
+                BrokerTestUtil.newUniqueName("persistent://prop-xyz/use/ns1/test-topic");
 
         admin.topics().createPartitionedTopic(partitionedTopicName, 1);
         assertEquals(admin.topics().getPartitionedTopicMetadata(partitionedTopicName).partitions, 1);
@@ -137,7 +140,8 @@ public class IncrementPartitionsTest extends MockedPulsarServiceBaseTest {
 
     @Test
     public void testIncrementPartitionsWithReaders() throws Exception {
-        TopicName partitionedTopicName = TopicName.get("persistent://prop-xyz/use/ns1/test-topic-" + System.nanoTime());
+        TopicName partitionedTopicName = TopicName.get(
+                BrokerTestUtil.newUniqueName("persistent://prop-xyz/use/ns1/test-topic"));
 
         admin.topics().createPartitionedTopic(partitionedTopicName.toString(), 1);
         assertEquals(admin.topics().getPartitionedTopicMetadata(partitionedTopicName.toString()).partitions, 1);
