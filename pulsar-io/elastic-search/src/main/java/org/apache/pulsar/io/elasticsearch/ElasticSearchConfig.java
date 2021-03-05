@@ -91,6 +91,14 @@ public class ElasticSearchConfig implements Serializable {
     )
     private String password;
 
+    @FieldDoc(
+            required = false,
+            defaultValue = "id",
+            sensitive = true,
+            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id. Default value is id"
+    )
+    private String primaryFields = "id";
+
     public static ElasticSearchConfig load(String yamlFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         return mapper.readValue(new File(yamlFile), ElasticSearchConfig.class);
@@ -117,6 +125,10 @@ public class ElasticSearchConfig implements Serializable {
 
         if (indexNumberOfReplicas < 0) {
             throw new IllegalArgumentException("indexNumberOfReplicas must be a positive integer");
+        }
+
+        if (primaryFields == null || primaryFields.split(",").length == 0) {
+            throw new IllegalArgumentException("primaryFields must be a comma separated list of field names");
         }
     }
 }
