@@ -673,4 +673,10 @@ public interface ManagedCursor {
      */
     ManagedCursorMXBean getStats();
 
+    /**
+     * Checks if read position changed since this method was called last time.
+     *
+     * @return if read position changed
+     */
+    boolean checkAndUpdateReadPositionChanged();
 }

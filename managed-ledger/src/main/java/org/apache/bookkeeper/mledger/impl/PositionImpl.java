@@ -125,7 +125,6 @@ public class PositionImpl implements Position, Comparable<PositionImpl> {
             PositionImpl other = (PositionImpl) obj;
             return ledgerId == other.ledgerId && entryId == other.entryId;
         }
-
         return false;
     }
 
