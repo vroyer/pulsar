@@ -18,8 +18,8 @@
  */
 package org.apache.pulsar.io.elasticsearch;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.http.HttpHost;
@@ -27,9 +27,6 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
-import org.apache.pulsar.client.api.schema.Field;
-import org.apache.pulsar.client.api.schema.GenericRecord;
-import org.apache.pulsar.common.schema.SchemaInfo;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
@@ -50,8 +47,9 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Arrays;
+import java.util.Base64;
 import java.util.Map;
+
 /**
  * The base abstract class for ElasticSearch sinks.
  * Users need to implement extractKeyValue function to use this sink.
@@ -63,12 +61,8 @@ import java.util.Map;
     help = "A sink connector that sends pulsar messages to elastic search",
     configClass = ElasticSearchConfig.class
 )
+@Slf4j
 public class ElasticSearchSink implements Sink<byte[]> {
-
-    protected static final String ACTION = "ACTION";
-    protected static final String INSERT = "INSERT";
-    protected static final String UPDATE = "UPDATE";
-    protected static final String DELETE = "DELETE";
 
     private URL url;
     private RestHighLevelClient client;
@@ -90,27 +84,20 @@ public class ElasticSearchSink implements Sink<byte[]> {
 
     @Override
     public void write(Record<byte[]> record) {
-        String action = record.getProperties().get(ACTION);
-        if (action == null) {
-            action = INSERT;
-        }
-        switch(action) {
-            case DELETE:
+        try {
+            System.out.println("Writing record.value=" + record.getValue());
+            if(record.getValue() == null) {
                 deleteDocument(record);
-                break;
-            case UPDATE:
-            case INSERT:
+            } else {
                 indexDocument(record);
-                break;
-            default:
-                String msg = String.format("Unsupported action %s, can be one of %s, or not set which indicate %s",
-                        action, Arrays.asList(INSERT, UPDATE, DELETE), INSERT);
-                throw new IllegalArgumentException(msg);
+            }
+        } catch(Exception e) {
+            e.printStackTrace();
         }
     }
 
     void indexDocument(Record<byte[]> record) {
-        Pair<String, String> document = extractDocument(record);
+        Pair<String, String> document = extractIdAndDocument(record);
         IndexRequest indexRequest = Requests.indexRequest(elasticSearchConfig.getIndexName());
         if (document.getLeft() != null) {
             indexRequest.id(document.getLeft());
@@ -134,7 +121,7 @@ public class ElasticSearchSink implements Sink<byte[]> {
     }
 
     void deleteDocument(Record<byte[]> record) {
-        Pair<String, String> document = extractDocument(record);
+        Pair<String, String> document = extractIdAndDocument(record);
         DeleteRequest deleteRequest = Requests.deleteRequest(elasticSearchConfig.getIndexName());
         deleteRequest.id(document.getLeft());
         deleteRequest.type(elasticSearchConfig.getTypeName());
@@ -158,34 +145,17 @@ public class ElasticSearchSink implements Sink<byte[]> {
      * @param record
      * @return A pair for _id and _source
      */
-    public Pair<String, String> extractDocument(Record<byte[]> record) {
-        String id = null,  doc = null;
-        SchemaInfo keySchemaInfo = record.getSchema().getSchemaInfo();
-        switch(keySchemaInfo.getType()) {
-            case AVRO:
-                // TODO: support AVRO
-                break;
-            case BYTES:
-            case JSON:
-                doc = new String(record.getValue());
-                StringBuffer sb = new StringBuffer("[");
-                try {
-                    JsonNode actualObj = objectMapper.readTree(doc);
-                    int i = 0;
-                    for(String pkField : elasticSearchConfig.getPrimaryFields().split(",")) {
-                        if (i > 0)
-                            sb.append(",");
-                        sb.append(actualObj.get(pkField).toString());
-                        i++;
-                    }
-                } catch(IOException e) {
-                    e.printStackTrace();
-                }
-                sb.append("]");
-                id = sb.toString();
-                break;
+    public Pair<String, String> extractIdAndDocument(Record<byte[]> record) {
+        String id = null;
+        if (record.getKey().isPresent()) {
+            String b64Id = record.getKey().get();
+            id = new String(Base64.getDecoder().decode(b64Id));
         }
-        System.out.println("schemaType="+keySchemaInfo.getType()+" properties="+record.getProperties()+" id="+id+" doc="+doc);
+        String doc = new String(record.getValue());
+        System.out.println("recordType="+record.getClass().getName() +
+                        " schemaType="+record.getSchema().getSchemaInfo().getType() +
+                        " id=" + id +
+                        " doc=" + doc);
         return Pair.of(id, doc);
     }
 

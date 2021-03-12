@@ -21,6 +21,7 @@ package org.apache.pulsar.functions.api;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Schema;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
@@ -42,10 +43,14 @@ public interface Record<T> {
     }
 
     /**
-     * Return a key if the key has one associated.
+     * Return a key if the message has one associated.
      */
     default Optional<String> getKey() {
         return Optional.empty();
+    }
+
+    default Optional<byte[]> getKeyBytes() {
+       return getKey().map(s -> Base64.getDecoder().decode(s));
     }
 
     default Schema<T> getSchema() {

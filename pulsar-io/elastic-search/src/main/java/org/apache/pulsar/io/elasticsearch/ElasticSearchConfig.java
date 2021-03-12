@@ -95,7 +95,7 @@ public class ElasticSearchConfig implements Serializable {
             required = false,
             defaultValue = "id",
             sensitive = true,
-            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id. Default value is id"
+            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id."
     )
     private String primaryFields = "id";
 
@@ -125,10 +125,6 @@ public class ElasticSearchConfig implements Serializable {
 
         if (indexNumberOfReplicas < 0) {
             throw new IllegalArgumentException("indexNumberOfReplicas must be a positive integer");
-        }
-
-        if (primaryFields == null || primaryFields.split(",").length == 0) {
-            throw new IllegalArgumentException("primaryFields must be a comma separated list of field names");
         }
     }
 }

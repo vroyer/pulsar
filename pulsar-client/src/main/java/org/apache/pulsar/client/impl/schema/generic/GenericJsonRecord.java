@@ -18,16 +18,18 @@
  */
 package org.apache.pulsar.client.impl.schema.generic;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.common.schema.SchemaInfo;
+
 import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
-import lombok.extern.slf4j.Slf4j;
-import org.apache.pulsar.client.api.schema.Field;
-import org.apache.pulsar.common.schema.SchemaInfo;
 
 /**
  * Generic json record.
@@ -50,6 +52,13 @@ public class GenericJsonRecord extends VersionedGenericRecord {
         super(schemaVersion, fields);
         this.jn = jn;
         this.schemaInfo = schemaInfo;
+    }
+
+    public GenericJsonRecord(GenericJsonSchema genericJsonSchema, String jsonString) throws JsonProcessingException {
+        this(null,
+                genericJsonSchema.getFields(),
+                new ObjectMapper().readTree(jsonString),
+                genericJsonSchema.getSchemaInfo());
     }
 
     public JsonNode getJsonNode() {
