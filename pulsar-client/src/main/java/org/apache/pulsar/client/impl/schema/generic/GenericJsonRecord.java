@@ -22,7 +22,6 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.collect.Lists;
-import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.api.schema.Field;
 import org.apache.pulsar.common.schema.SchemaInfo;
 
@@ -30,6 +29,11 @@ import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+
+import lombok.extern.slf4j.Slf4j;
+import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.common.schema.SchemaInfo;
+import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * Generic json record.
@@ -133,9 +137,19 @@ public class GenericJsonRecord extends VersionedGenericRecord {
         return isBinary;
     }
 
-    private org.apache.avro.Schema parseAvroSchema(String schemaJson) {
+    private static org.apache.avro.Schema parseAvroSchema(String schemaJson) {
         final org.apache.avro.Schema.Parser parser = new org.apache.avro.Schema.Parser();
         parser.setValidateDefaults(false);
         return parser.parse(schemaJson);
+    }
+
+    @Override
+    public Object getNativeRecord() {
+        return jn;
+    }
+
+    @Override
+    public SchemaType getSchemaType() {
+        return SchemaType.JSON;
     }
 }

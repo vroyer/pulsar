@@ -20,12 +20,12 @@ package org.apache.pulsar.schema;
 
 import static org.apache.pulsar.common.naming.TopicName.PUBLIC_TENANT;
 import static org.apache.pulsar.schema.compatibility.SchemaCompatibilityCheckTest.randomName;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertTrue;
-
+import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertFalse;
+import static org.testng.Assert.assertTrue;
+import com.google.common.collect.Sets;
 import java.util.Collections;
-
+import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.broker.auth.MockedPulsarServiceBaseTest;
 import org.apache.pulsar.broker.service.schema.SchemaRegistryServiceImpl;
 import org.apache.pulsar.client.api.Consumer;
@@ -38,14 +38,12 @@ import org.apache.pulsar.common.naming.TopicDomain;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.common.policies.data.ClusterData;
 import org.apache.pulsar.common.policies.data.TenantInfo;
+import org.apache.pulsar.common.schema.KeyValue;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
-
-import com.google.common.collect.Sets;
-
-import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 public class SchemaTest extends MockedPulsarServiceBaseTest {
@@ -137,8 +135,8 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
         producer.send(personTwo);
 
         Schemas.PersonTwo personConsume = consumer.receive().getValue();
-        assertEquals("Tom", personConsume.getName());
-        assertEquals(1, personConsume.getId());
+        assertEquals(personConsume.getName(), "Tom");
+        assertEquals(personConsume.getId(), 1);
 
         producer.close();
         consumer.close();
@@ -183,17 +181,123 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
                 .topic(topic)
                 .subscribe();
 
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+                .subscriptionName("test-sub2")
+                .topic(topic)
+                .subscribe();
+
         producer.send(bytesRecord);
 
         Message<GenericRecord> message = consumer.receive();
         Message<Schemas.BytesRecord> message1 = consumer1.receive();
+        Message<Object> message2 = consumer2.receive();
 
         assertEquals(message.getValue().getField("address").getClass(),
                 message1.getValue().getAddress().getClass());
 
+        GenericRecord value2 = (GenericRecord) message2.getValue();
+        assertEquals(value2.getField("address").getClass(),
+                message1.getValue().getAddress().getClass());
+
+
         producer.close();
         consumer.close();
         consumer1.close();
+        consumer2.close();
+    }
+
+    @Test
+    public void testStringSchema() throws Exception {
+        final String tenant = PUBLIC_TENANT;
+        final String namespace = "test-namespace-" + randomName(16);
+        final String topicName = "test-string-schema";
+
+        final String topic = TopicName.get(
+                TopicDomain.persistent.value(),
+                tenant,
+                namespace,
+                topicName).toString();
+
+        admin.namespaces().createNamespace(
+                tenant + "/" + namespace,
+                Sets.newHashSet(CLUSTER_NAME));
+
+        admin.topics().createPartitionedTopic(topic, 2);
+
+        Producer<String> producer = pulsarClient
+                .newProducer(Schema.STRING)
+                .topic(topic)
+                .create();
+
+        Consumer<String> consumer = pulsarClient.newConsumer(Schema.STRING)
+                .subscriptionName("test-sub")
+                .topic(topic)
+                .subscribe();
+
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+                .subscriptionName("test-sub2")
+                .topic(topic)
+                .subscribe();
+
+        producer.send("foo");
+
+        Message<String> message = consumer.receive();
+        Message<Object> message2 = consumer2.receive();
+
+        assertEquals("foo", message.getValue());
+        assertEquals("foo", message2.getValue());
+
+        producer.close();
+        consumer.close();
+        consumer2.close();
+    }
+
+    @Test
+    public void testKeyValueSchema() throws Exception {
+        final String tenant = PUBLIC_TENANT;
+        final String namespace = "test-namespace-" + randomName(16);
+        final String topicName = "test-string-schema";
+
+        final String topic = TopicName.get(
+                TopicDomain.persistent.value(),
+                tenant,
+                namespace,
+                topicName).toString();
+
+        admin.namespaces().createNamespace(
+                tenant + "/" + namespace,
+                Sets.newHashSet(CLUSTER_NAME));
+
+        admin.topics().createPartitionedTopic(topic, 2);
+
+        Producer<KeyValue<String, Integer>> producer = pulsarClient
+                .newProducer(Schema.KeyValue(Schema.STRING, Schema.INT32, KeyValueEncodingType.INLINE))
+                .topic(topic)
+                .create();
+
+        producer.send(new KeyValue<>("foo", 123));
+
+        Consumer<KeyValue<String, Integer>> consumer = pulsarClient.newConsumer(Schema.KeyValue(Schema.STRING, Schema.INT32, KeyValueEncodingType.INLINE))
+                .subscriptionName("test-sub")
+                .topic(topic)
+                .subscribe();
+
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+                .subscriptionName("test-sub2")
+                .topic(topic)
+                .subscribe();
+
+        producer.send(new KeyValue<>("foo", 123));
+
+        Message<KeyValue<String, Integer>> message = consumer.receive();
+        Message<Object> message2 = consumer2.receive();
+        log.info("KV {}", message.getValue());
+        log.info("Object {}", message2.getValue());
+        assertEquals(message.getValue(), message2.getValue());
+
+        producer.close();
+        consumer.close();
+        consumer2.close();
     }
 
     @Test

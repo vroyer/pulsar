@@ -1063,17 +1063,17 @@ public class PersistentSubscription implements Subscription {
     }
 
     @Override
-    public CompletableFuture<Void> endTxn(long txnidMostBits, long txnidLeastBits, int txnAction) {
+    public CompletableFuture<Void> endTxn(long txnidMostBits, long txnidLeastBits, int txnAction, long lowWaterMark) {
         TxnID txnID = new TxnID(txnidMostBits, txnidLeastBits);
         if (TxnAction.COMMIT.getValue() == txnAction) {
-            return pendingAckHandle.commitTxn(txnID, Collections.emptyMap());
+            return pendingAckHandle.commitTxn(txnID, Collections.emptyMap(), lowWaterMark);
         } else if (TxnAction.ABORT.getValue() == txnAction) {
             Consumer redeliverConsumer = null;
             if (getDispatcher() instanceof PersistentDispatcherSingleActiveConsumer) {
                 redeliverConsumer = ((PersistentDispatcherSingleActiveConsumer)
                         getDispatcher()).getActiveConsumer();
             }
-            return pendingAckHandle.abortTxn(txnID, redeliverConsumer);
+            return pendingAckHandle.abortTxn(txnID, redeliverConsumer, lowWaterMark);
         } else {
             return FutureUtil.failedFuture(new NotAllowedException("Unsupported txnAction " + txnAction));
         }
@@ -1090,6 +1090,10 @@ public class PersistentSubscription implements Subscription {
 
     public boolean checkIsCanDeleteConsumerPendingAck(PositionImpl position) {
         return this.pendingAckHandle.checkIsCanDeleteConsumerPendingAck(position);
+    }
+
+    public boolean checkAndUnblockIfStuck() {
+        return dispatcher.checkAndUnblockIfStuck();
     }
 
     private static final Logger log = LoggerFactory.getLogger(PersistentSubscription.class);
