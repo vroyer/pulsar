@@ -18,32 +18,20 @@
  */
 package org.apache.pulsar.io.core;
 
-import java.util.Map;
-
-import org.apache.pulsar.common.classification.InterfaceAudience;
-import org.apache.pulsar.common.classification.InterfaceStability;
 import org.apache.pulsar.functions.api.Record;
 
-/**
- * Generic sink interface users can implement to run Sink on top of Pulsar Functions.
- */
-@InterfaceAudience.Public
-@InterfaceStability.Stable
-public interface Sink<T> extends Connector<T>, AutoCloseable {
-    /**
-     * Open connector with configuration.
-     *
-     * @param config initialization config
-     * @param sinkContext environment where the sink connector is running
-     * @throws Exception IO type exceptions when opening a connector
-     */
-    void open(final Map<String, Object> config, SinkContext sinkContext) throws Exception;
+import java.io.Closeable;
+import java.util.function.Predicate;
 
-    /**
-     * Write a message to Sink.
-     *
-     * @param record record to write to sink
-     * @throws Exception
-     */
-    void write(Record<T> record) throws Exception;
+/**
+ * Applies the transformation if the predicate is true.
+ * @param <T>
+ */
+public interface Transformation<T> extends Predicate<Record<T>>, Closeable {
+
+    Record<T> apply(Record<T> record);
+
+    /** Signal that this transformation instance will no longer will be used. **/
+    @Override
+    void close();
 }

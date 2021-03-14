@@ -77,6 +77,7 @@ import org.apache.pulsar.functions.utils.functioncache.FunctionCacheManager;
 import org.apache.pulsar.functions.utils.io.Connector;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.Source;
+import org.apache.pulsar.io.core.Transformation;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -108,8 +109,8 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
 
     private Record<?> currentRecord;
 
-    private Source source;
-    private Sink sink;
+    private Source<?> source;
+    private Sink<?> sink;
 
     private final SecretsProvider secretsProvider;
 
@@ -349,7 +350,12 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
             Thread.currentThread().setContextClassLoader(functionClassLoader);
         }
         try {
-            this.sink.write(new SinkRecord<>(srcRecord, output));
+            Record record = srcRecord;
+            for(Transformation transformation : this.sink.transformations()) {
+                if (transformation.test(record))
+                    record = transformation.apply(record);
+            }
+            this.sink.write(new SinkRecord<>(record, output));
         } catch (Exception e) {
             log.info("Encountered exception in sink write: ", e);
             stats.incrSinkExceptions(e);
@@ -366,6 +372,10 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
         }
         try {
             record = this.source.read();
+            for(Transformation transformation : this.source.transformations()) {
+                if (transformation.test(record))
+                    record = transformation.apply(record);
+            }
         } catch (Exception e) {
             stats.incrSourceExceptions(e);
             log.error("Encountered exception in source read", e);
