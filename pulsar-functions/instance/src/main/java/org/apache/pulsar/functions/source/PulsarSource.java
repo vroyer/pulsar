@@ -43,14 +43,14 @@ import org.apache.pulsar.io.core.SourceContext;
 import org.bouncycastle.jce.provider.BouncyCastleProvider;
 
 @Slf4j
-public class PulsarSource<T> extends PushSource<T> implements MessageListener<T> {
+public class PulsarSource extends PushSource<Object> implements MessageListener<Object> {
 
     private final PulsarClient pulsarClient;
     private final PulsarSourceConfig pulsarSourceConfig;
     private final Map<String, String> properties;
     private final ClassLoader functionClassLoader;
     private List<String> inputTopics;
-    private List<Consumer<T>> inputConsumers = new LinkedList<>();
+    private List<Consumer<Object>> inputConsumers = new LinkedList<>();
     private final TopicSchema topicSchema;
 
     public PulsarSource(PulsarClient pulsarClient, PulsarSourceConfig pulsarConfig, Map<String, String> properties,
@@ -66,15 +66,15 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
     public void open(Map<String, Object> config, SourceContext sourceContext) throws Exception {
         // Setup schemas
         log.info("Opening pulsar source with config: {}", pulsarSourceConfig);
-        Map<String, ConsumerConfig<T>> configs = setupConsumerConfigs();
+        Map<String, ConsumerConfig<Object>> configs = setupConsumerConfigs();
 
-        for (Map.Entry<String, ConsumerConfig<T>> e : configs.entrySet()) {
+        for (Map.Entry<String, ConsumerConfig<Object>> e : configs.entrySet()) {
             String topic = e.getKey();
-            ConsumerConfig<T> conf = e.getValue();
+            ConsumerConfig<Object> conf = e.getValue();
             log.info("Creating consumers for topic : {}, schema : {}, schemaInfo: {}",
                     topic, conf.getSchema(), conf.getSchema().getSchemaInfo());
 
-            ConsumerBuilder<T> cb = pulsarClient.newConsumer(conf.getSchema())
+            ConsumerBuilder<Object> cb = pulsarClient.newConsumer(Schema.OBJECT())
                     .subscriptionName(pulsarSourceConfig.getSubscriptionName())
                     .subscriptionInitialPosition(pulsarSourceConfig.getSubscriptionPosition())
                     .subscriptionType(pulsarSourceConfig.getSubscriptionType());
@@ -116,7 +116,7 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
                 cb = cb.deadLetterPolicy(deadLetterPolicyBuilder.build());
             }
 
-            Consumer<T> consumer = cb.subscribeAsync().join();
+            Consumer<Object> consumer = cb.subscribeAsync().join();
             inputConsumers.add(consumer);
         }
 
@@ -127,13 +127,13 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
     }
 
     @Override
-    public void received(Consumer<T> consumer, Message<T> message) {
-        Schema<T> schema = null;
+    public void received(Consumer<Object> consumer, Message<Object> message) {
+        Schema<Object> schema = null;
         if (message instanceof MessageImpl) {
             MessageImpl impl = (MessageImpl) message;
             schema = impl.getSchema();
         }
-        Record<T> record = PulsarRecord.<T>builder()
+        Record<Object> record = PulsarRecord.<Object>builder()
                 .message(message)
                 .schema(schema)
                 .topicName(message.getTopicName())
@@ -169,8 +169,8 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
 
     @SuppressWarnings("unchecked")
     @VisibleForTesting
-    Map<String, ConsumerConfig<T>> setupConsumerConfigs() throws ClassNotFoundException {
-        Map<String, ConsumerConfig<T>> configs = new TreeMap<>();
+    Map<String, ConsumerConfig<Object>> setupConsumerConfigs() throws ClassNotFoundException {
+        Map<String, ConsumerConfig<Object>> configs = new TreeMap<>();
 
         Class<?> typeArg = Reflections.loadClass(this.pulsarSourceConfig.getTypeClassName(),
                 this.functionClassLoader);
@@ -179,16 +179,16 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
 
         // Check new config with schema types or classnames
         pulsarSourceConfig.getTopicSchema().forEach((topic, conf) -> {
-            ConsumerConfig.ConsumerConfigBuilder<T> consumerConfBuilder =  ConsumerConfig.<T> builder().
+            ConsumerConfig.ConsumerConfigBuilder<Object> consumerConfBuilder =  ConsumerConfig.<Object> builder().
                     isRegexPattern(conf.isRegexPattern()).
                     receiverQueueSize(conf.getReceiverQueueSize()).
                     consumerProperties(conf.getConsumerProperties());
 
-            Schema<T> schema;
+            Schema<Object> schema;
             if (conf.getSerdeClassName() != null && !conf.getSerdeClassName().isEmpty()) {
-                schema = (Schema<T>) topicSchema.getSchema(topic, typeArg, conf.getSerdeClassName(), true);
+                schema = (Schema<Object>) topicSchema.getSchema(topic, typeArg, conf.getSerdeClassName(), true);
             } else {
-                schema = (Schema<T>) topicSchema.getSchema(topic, typeArg, conf, true);
+                schema = (Schema<Object>) topicSchema.getSchema(topic, typeArg, conf, true);
             }
             consumerConfBuilder.schema(schema);
 
@@ -214,7 +214,7 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
         return inputTopics;
     }
 
-    public List<Consumer<T>> getInputConsumers() {
+    public List<Consumer<Object>> getInputConsumers() {
         return inputConsumers;
     }
 

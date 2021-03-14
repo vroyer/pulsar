@@ -182,7 +182,7 @@ public class PulsarSourceTest {
         pulsarConfig.setTypeClassName(Void.class.getName());
 
         @Cleanup
-        PulsarSource<?> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
 
         try {
             pulsarSource.open(new HashMap<>(), mock(SourceContext.class));
@@ -210,7 +210,7 @@ public class PulsarSourceTest {
         pulsarConfig.setTopicSchema(topicSerdeClassNameMap);
 
         @Cleanup
-        PulsarSource<?> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
         try {
             pulsarSource.open(new HashMap<>(), mock(SourceContext.class));
             fail("Should fail constructing java instance if function type is inconsistent with serde type");
@@ -237,7 +237,7 @@ public class PulsarSourceTest {
         pulsarConfig.setTopicSchema(consumerConfigs);
 
         @Cleanup
-        PulsarSource<?> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
 
         pulsarSource.open(new HashMap<>(), mock(SourceContext.class));
     }
@@ -252,7 +252,7 @@ public class PulsarSourceTest {
         pulsarConfig.setTopicSchema(consumerConfigs);
 
         @Cleanup
-        PulsarSource<?> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
 
         pulsarSource.setupConsumerConfigs();
     }
@@ -261,7 +261,7 @@ public class PulsarSourceTest {
     public void testDanglingSubscriptions() throws Exception {
         PulsarSourceConfig pulsarConfig = getPulsarConfigs(true);
 
-        PulsarSource<?> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
         try {
             pulsarSource.open(new HashMap<>(), mock(SourceContext.class));
             fail();
@@ -280,7 +280,7 @@ public class PulsarSourceTest {
         pulsarConfig.setTypeClassName(GenericRecord.class.getName());
 
         @Cleanup
-        PulsarSource<GenericRecord> pulsarSource = new PulsarSource<>(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
+        PulsarSource pulsarSource = new PulsarSource(getPulsarClient(), pulsarConfig, new HashMap<>(), Thread.currentThread().getContextClassLoader());
 
         pulsarSource.open(new HashMap<>(), mock(SourceContext.class));
         Consumer consumer = mock(Consumer.class);
@@ -289,7 +289,7 @@ public class PulsarSourceTest {
         when(messageImpl.getSchema()).thenReturn(schema);
         pulsarSource.received(consumer, (Message) messageImpl);
         verify(messageImpl.getSchema(), times(1));
-        Record<GenericRecord> pushed = pulsarSource.read();
+        Record<Object> pushed = pulsarSource.read();
         assertSame(pushed.getSchema(), schema);
     }
 }
