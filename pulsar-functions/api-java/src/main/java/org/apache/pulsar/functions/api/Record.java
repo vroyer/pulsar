@@ -21,11 +21,18 @@ package org.apache.pulsar.functions.api;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.Schema;
 
+import java.util.Base64;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
+
+import org.apache.pulsar.client.impl.schema.KeyValueSchema;
+import org.apache.pulsar.client.impl.schema.ObjectSchema;
 import org.apache.pulsar.common.classification.InterfaceAudience;
 import org.apache.pulsar.common.classification.InterfaceStability;
+import org.apache.pulsar.common.schema.KeyValue;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
+import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * Pulsar Connect's Record interface. Record encapsulates the information about a record being read from a Source.
@@ -48,6 +55,10 @@ public interface Record<T> {
         return Optional.empty();
     }
 
+    default Optional<byte[]> getKeyBytes() {
+        return getKey().map(s -> Base64.getDecoder().decode(s));
+    }
+
     default Schema<T> getSchema() {
         return null;
     }
@@ -58,6 +69,37 @@ public interface Record<T> {
      * @return The record data
      */
     T getValue();
+
+    default boolean isKeyValueRecord() {
+        return getValue() instanceof KeyValue;
+    }
+
+    default KeyValueSchema getKeyValueSchema() {
+        Schema<?> schema = getSchema();
+        if (schema instanceof ObjectSchema)
+            schema = ((ObjectSchema)schema).getInternalSchema();
+        return schema instanceof KeyValueSchema ? (KeyValueSchema) schema : null;
+    }
+
+    default Optional<Object> getRecordKey() {
+        KeyValueSchema schema = getKeyValueSchema();
+        if (schema != null && schema.getKeyValueEncodingType().equals(KeyValueEncodingType.SEPARATED)) {
+            return getKey().isPresent()
+                    ? Optional.of(schema.getKeySchema().decode(getKeyBytes().get()))
+                    : Optional.empty();
+        }
+        // returns the INLINE key if available.
+        return isKeyValueRecord()
+                ? Optional.ofNullable(((KeyValue)getValue()).getKey())
+                : Optional.empty();
+    }
+
+    default Object getRecordValue() {
+        return isKeyValueRecord()
+                ? ((KeyValue)getValue()).getValue()
+                : getValue();
+    }
+
 
     /**
      * Retrieves the event time of the record from the source.

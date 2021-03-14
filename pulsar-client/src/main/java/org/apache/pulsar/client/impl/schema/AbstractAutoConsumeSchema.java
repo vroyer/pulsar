@@ -202,4 +202,8 @@ public abstract class AbstractAutoConsumeSchema <T> implements Schema<T> {
                     + schemaInfo.getType() + "' is not supported yet");
         }
     }
+
+    public Schema<T> getInternalSchema() {
+        return this.schema;
+    }
 }
