@@ -18,6 +18,8 @@
  */
 package org.apache.pulsar.io.elasticsearch;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
@@ -27,6 +29,9 @@ import org.apache.http.auth.AuthScope;
 import org.apache.http.auth.UsernamePasswordCredentials;
 import org.apache.http.client.CredentialsProvider;
 import org.apache.http.impl.client.BasicCredentialsProvider;
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.schema.KeyValueSchema;
+import org.apache.pulsar.client.impl.schema.generic.GenericJsonRecord;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
@@ -47,22 +52,21 @@ import org.elasticsearch.common.xcontent.XContentType;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.util.Base64;
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * The base abstract class for ElasticSearch sinks.
  * Users need to implement extractKeyValue function to use this sink.
- * This class assumes that the input will be JSON documents
  */
 @Connector(
     name = "elastic_search",
     type = IOType.SINK,
-    help = "A sink connector that sends pulsar messages to elastic search",
+    help = "A keyed sink connector that sends pulsar messages to elasticsearch",
     configClass = ElasticSearchConfig.class
 )
 @Slf4j
-public class ElasticSearchSink implements Sink<byte[]> {
+public class ElasticSearchSink implements Sink<Object> {
 
     private URL url;
     private RestHighLevelClient client;
@@ -83,21 +87,21 @@ public class ElasticSearchSink implements Sink<byte[]> {
     }
 
     @Override
-    public void write(Record<byte[]> record) {
+    public void write(Record<Object> record) {
         try {
             System.out.println("Writing record.value=" + record.getValue());
-            if(record.getValue() == null) {
-                deleteDocument(record);
+            Pair<String, String> idAndDoc = extractIdAndDocument(record);
+            if(idAndDoc.getValue() == null) {
+                deleteDocument(record, idAndDoc);
             } else {
-                indexDocument(record);
+                indexDocument(record, idAndDoc);
             }
         } catch(Exception e) {
-            e.printStackTrace();
+            log.error("Unexpected error", e);
         }
     }
 
-    void indexDocument(Record<byte[]> record) {
-        Pair<String, String> document = extractIdAndDocument(record);
+    void indexDocument(Record<Object> record, Pair<String, String> document) {
         IndexRequest indexRequest = Requests.indexRequest(elasticSearchConfig.getIndexName());
         if (document.getLeft() != null) {
             indexRequest.id(document.getLeft());
@@ -120,8 +124,7 @@ public class ElasticSearchSink implements Sink<byte[]> {
         }
     }
 
-    void deleteDocument(Record<byte[]> record) {
-        Pair<String, String> document = extractIdAndDocument(record);
+    void deleteDocument(Record<Object> record, Pair<String, String> document) {
         DeleteRequest deleteRequest = Requests.deleteRequest(elasticSearchConfig.getIndexName());
         deleteRequest.id(document.getLeft());
         deleteRequest.type(elasticSearchConfig.getTypeName());
@@ -145,13 +148,79 @@ public class ElasticSearchSink implements Sink<byte[]> {
      * @param record
      * @return A pair for _id and _source
      */
-    public Pair<String, String> extractIdAndDocument(Record<byte[]> record) {
-        String id = null;
-        if (record.getKey().isPresent()) {
-            String b64Id = record.getKey().get();
-            id = new String(Base64.getDecoder().decode(b64Id));
+    public Pair<String, String> extractIdAndDocument(Record<Object> record) {
+        KeyValueSchema<Object,Object> keyValueSchema = record.getKeyValueSchema();
+
+        String id = record.getKey().isPresent() ? record.getKey().get() : null;
+        if (record.getRecordKey().isPresent()) {
+            Object key = record.getRecordKey().get();
+            Schema keySchema = keyValueSchema == null ? null : keyValueSchema.getKeySchema();
+            if (keySchema != null) {
+                switch(keySchema.getSchemaInfo().getType()) {
+                    case STRING:
+                        id = (String) key;
+                        break;
+                    case INT8:
+                        id = Byte.toString((Byte)key);
+                        break;
+                    case INT16:
+                        id = Short.toString((Short)key);
+                        break;
+                    case INT32:
+                        id = Integer.toString((Integer)key);
+                        break;
+                    case INT64:
+                        id = Long.toString((Long)key);
+                        break;
+                    default:
+                        throw new UnsupportedOperationException();
+                }
+            } else {
+                id = key.toString();
+            }
         }
-        String doc = new String(record.getValue());
+
+        String doc = null;
+        if (record.getValue() != null) {
+            Schema valueSchema = keyValueSchema == null ?  record.getSchema() : keyValueSchema.getValueSchema();
+            if (valueSchema != null) {
+                Object value = record.getRecordValue();
+                switch(valueSchema.getSchemaInfo().getType()) {
+                    case STRING:
+                        doc = (String) value;
+                        break;
+                    case JSON:
+                        GenericJsonRecord genericJsonRecord = (GenericJsonRecord) value;
+                        try {
+                            doc = objectMapper.writeValueAsString(genericJsonRecord.getJsonNode());
+                        } catch(JsonProcessingException e) {
+                            log.error("Failed to write GenericJsonRecord as String", e);
+                        }
+                        break;
+                    default:
+                        throw new UnsupportedOperationException();
+                }
+            } else {
+                doc = record.getValue().toString();
+            }
+        }
+
+        if (id == null && doc != null && elasticSearchConfig.getPrimaryFields() != null) {
+            // extract the PK from the JSON document
+            try {
+                JsonNode jsonNode = objectMapper.readTree(doc);
+                StringBuffer sb = new StringBuffer("[");
+                for(String field : elasticSearchConfig.getPrimaryFields().split(",")) {
+                    if (sb.length() > 1)
+                        sb.append(",");
+                    sb.append(jsonNode.get(field));
+                }
+                id = sb.append("]").toString();
+            } catch(JsonProcessingException e) {
+                log.error("Failed to read JSON", e);
+            }
+        }
+
         System.out.println("recordType="+record.getClass().getName() +
                         " schemaType="+record.getSchema().getSchemaInfo().getType() +
                         " id=" + id +

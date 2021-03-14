@@ -21,7 +21,6 @@ package org.apache.pulsar.io.elasticsearch;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.andreinc.mockneat.MockNeat;
-import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.elasticsearch.data.Profile;
@@ -47,7 +46,7 @@ public class ElasticSearchSinkTests {
     protected static Gson gson;
 
     @Mock
-    protected Record<byte[]> mockRecord;
+    protected Record<Object> mockRecord;
 
     @Mock
     protected SinkContext mockSinkContext;
@@ -89,13 +88,13 @@ public class ElasticSearchSinkTests {
         sink.close();
     }
 
-    @Test(enabled = false, expectedExceptions = ElasticsearchStatusException.class)
+    @Test(enabled = true, expectedExceptions = ElasticsearchStatusException.class)
     public final void invalidIndexNameTest() throws Exception {
         map.put("indexName", "myIndex");
         sink.open(map, mockSinkContext);
     }
 
-    @Test(enabled = false)
+    @Test(enabled = true)
     public final void createIndexTest() throws Exception {
         map.put("indexName", "test-index");
         sink.open(map, mockSinkContext);
