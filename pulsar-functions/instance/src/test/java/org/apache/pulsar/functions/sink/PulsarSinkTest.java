@@ -270,7 +270,7 @@ public class PulsarSinkTest {
 
         for (String topic : topics) {
 
-            SinkRecord<String> record = new SinkRecord<>(new Record<String>() {
+            SinkRecord record = new SinkRecord(new Record<String>() {
                 @Override
                 public Optional<String> getKey() {
                     return Optional.empty();
@@ -317,7 +317,7 @@ public class PulsarSinkTest {
 
         for (String topic : topics) {
 
-            SinkRecord<String> record = new SinkRecord<>(new Record<String>() {
+            Record<Object> record = new SinkRecord(new Record<String>() {
                 @Override
                 public Optional<String> getKey() {
                     return Optional.empty();
@@ -360,7 +360,7 @@ public class PulsarSinkTest {
 
         for (String topic : topics) {
 
-            SinkRecord<String> record = new SinkRecord<>(new Record<String>() {
+            SinkRecord record = new SinkRecord(new Record<String>() {
                 @Override
                 public Optional<String> getKey() {
                     return Optional.empty();

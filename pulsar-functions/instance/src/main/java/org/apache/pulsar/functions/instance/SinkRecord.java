@@ -34,12 +34,12 @@ import org.apache.pulsar.functions.api.Record;
 @Slf4j
 @Data
 @AllArgsConstructor
-public class SinkRecord<T> implements Record<T> {
+public class SinkRecord implements Record {
 
-    private final Record<T> sourceRecord;
-    private final T value;
+    private final Record sourceRecord;
+    private final Object value;
 
-    public Record<T> getSourceRecord() {
+    public Record getSourceRecord() {
         return sourceRecord;
     }
 
@@ -54,7 +54,7 @@ public class SinkRecord<T> implements Record<T> {
     }
 
     @Override
-    public T getValue() {
+    public Object getValue() {
         return value;
     }
 
@@ -89,7 +89,7 @@ public class SinkRecord<T> implements Record<T> {
     }
 
     @Override
-    public Schema<T> getSchema() {
+    public Schema<Object> getSchema() {
         if (sourceRecord == null) {
             return null;
         }
@@ -113,7 +113,7 @@ public class SinkRecord<T> implements Record<T> {
     }
 
     @Override
-    public Optional<Message<T>> getMessage() {
+    public Optional<Message> getMessage() {
         return sourceRecord.getMessage();
     }
 }

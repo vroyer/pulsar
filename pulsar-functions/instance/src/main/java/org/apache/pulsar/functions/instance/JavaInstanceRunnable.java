@@ -349,7 +349,7 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
             Thread.currentThread().setContextClassLoader(functionClassLoader);
         }
         try {
-            this.sink.write(new SinkRecord<>(srcRecord, output));
+            this.sink.write(new SinkRecord(srcRecord, output));
         } catch (Exception e) {
             log.info("Encountered exception in sink write: ", e);
             stats.incrSinkExceptions(e);
@@ -377,8 +377,6 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
         // check record is valid
         if (record == null) {
             throw new IllegalArgumentException("The record returned by the source cannot be null");
-        } else if (record.getValue() == null) {
-            throw new IllegalArgumentException("The value in the record returned by the source cannot be null");
         }
         return record;
     }
