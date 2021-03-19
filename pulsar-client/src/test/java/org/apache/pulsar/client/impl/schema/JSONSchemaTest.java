@@ -18,6 +18,7 @@
  */
 package org.apache.pulsar.client.impl.schema;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.FOO_FIELDS;
 import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_ALLOW_NULL;
 import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_NOT_ALLOW_NULL;
@@ -25,6 +26,10 @@ import static org.testng.Assert.assertEquals;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+
+import java.time.Instant;
+import java.time.LocalDate;
+import java.time.LocalTime;
 import java.util.Collections;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -33,12 +38,18 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
+import org.apache.pulsar.client.api.schema.GenericRecordBuilder;
+import org.apache.pulsar.client.api.schema.RecordSchemaBuilder;
+import org.apache.pulsar.client.api.schema.SchemaBuilder;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
+import org.apache.pulsar.client.avro.generated.NasaMission;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Bar;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.DerivedFoo;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Foo;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBar;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBarList;
+import org.apache.pulsar.client.impl.schema.generic.GenericJsonSchema;
+import org.apache.pulsar.common.schema.SchemaInfo;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -367,5 +378,38 @@ public class JSONSchemaTest {
         byte[] encoded = jsonSchema.encode(pc);
         PC roundtrippedPc = jsonSchema.decode(encoded);
         assertEquals(roundtrippedPc, pc);
+    }
+
+    @Test
+    public void testDateAndTimestamp() {
+        JSONSchema<NasaMission> missionSchema = JSONSchema.of(NasaMission.class);
+        GenericJsonSchema genericJsonSchema = new GenericJsonSchema(missionSchema.schemaInfo);
+        GenericRecordBuilder genericRecordBuilder = genericJsonSchema.newRecordBuilder();
+
+        LocalDate localDate = LocalDate.now();
+        LocalTime localTime = LocalTime.now();
+        Instant now = Instant.now();
+
+        genericRecordBuilder
+                .set("id", 1001)
+                .set("name","one")
+                .set("createYear", localDate)
+                .set("setCreatTime", localTime)
+                .set("createTimestamp", now)
+                .build();
+
+        NasaMission nasaMission = NasaMission.newBuilder()
+                .setId(1001)
+                .setName("one")
+                .setCreateYear(localDate)
+                .setCreateTime(localTime)
+                .setCreateTimestamp(now)
+                .build();
+
+        byte[] bytes = missionSchema.encode(nasaMission);
+        Assert.assertTrue(bytes.length > 0);
+
+        NasaMission object = missionSchema.decode(bytes);
+        assertEquals(object, nasaMission);
     }
 }
