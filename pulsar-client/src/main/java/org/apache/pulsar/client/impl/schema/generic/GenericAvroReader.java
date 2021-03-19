@@ -89,7 +89,7 @@ public class GenericAvroReader implements SchemaReader<GenericRecord> {
                     null,
                     decoder);
             return new GenericAvroRecord(schemaVersion, schema, fields, avroRecord);
-        } catch (IOException e) {
+        } catch (IOException | IndexOutOfBoundsException e) {
             throw new SchemaSerializationException(e);
         }
     }
@@ -103,7 +103,7 @@ public class GenericAvroReader implements SchemaReader<GenericRecord> {
                             null,
                             decoder);
             return new GenericAvroRecord(schemaVersion, schema, fields, avroRecord);
-        } catch (IOException e) {
+        } catch (IOException | IndexOutOfBoundsException e) {
             throw new SchemaSerializationException(e);
         } finally {
             try {
