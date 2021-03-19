@@ -27,6 +27,7 @@ import org.apache.pulsar.client.api.schema.SchemaInfoProvider;
 import org.apache.pulsar.client.impl.schema.generic.GenericAvroSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericJsonSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericProtobufNativeSchema;
+import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.SchemaInfo;
 
@@ -38,9 +39,9 @@ import static com.google.common.base.Preconditions.checkState;
  * Auto detect schema.
  */
 @Slf4j
-public class AutoConsumeSchema implements Schema<GenericRecord> {
+public class AutoConsumeSchema implements Schema<Object> {
 
-    private Schema<GenericRecord> schema;
+    private Schema<Object> schema;
 
     private String topicName;
 
@@ -48,7 +49,7 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
 
     private SchemaInfoProvider schemaInfoProvider;
 
-    public void setSchema(Schema<GenericRecord> schema) {
+    public void setSchema(Schema<Object> schema) {
         this.schema = schema;
     }
 
@@ -69,14 +70,14 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
     }
 
     @Override
-    public byte[] encode(GenericRecord message) {
+    public byte[] encode(Object message) {
         ensureSchemaInitialized();
 
         return schema.encode(message);
     }
 
     @Override
-    public GenericRecord decode(byte[] bytes, byte[] schemaVersion) {
+    public Object decode(byte[] bytes, byte[] schemaVersion) {
         if (schema == null) {
             SchemaInfo schemaInfo = null;
             try {
@@ -126,7 +127,7 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
         this.topicName = topicName;
         this.componentName = componentName;
         if (schemaInfo != null) {
-            GenericSchema genericSchema = generateSchema(schemaInfo);
+            Schema<Object> genericSchema = generateSchema(schemaInfo);
             setSchema(genericSchema);
             log.info("Configure {} schema for topic {} : {}",
                     componentName, topicName, schemaInfo.getSchemaDefinition());
@@ -134,8 +135,8 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
     }
 
     @Override
-    public Schema<GenericRecord> clone() {
-        Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
+    public Schema<Object> clone() {
+        Schema<Object> schema = Schema.AUTO_CONSUME();
         if (this.schema != null) {
             schema.configureSchemaInfo(topicName, componentName, this.schema.getSchemaInfo());
         } else {
@@ -147,20 +148,18 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
         return schema;
     }
 
-    private GenericSchema generateSchema(SchemaInfo schemaInfo) {
+    public Schema<Object> generateSchema(SchemaInfo schemaInfo) {
         // when using `AutoConsumeSchema`, we use the schema associated with the messages as schema reader
         // to decode the messages.
         final boolean useProvidedSchemaAsReaderSchema = false;
         switch (schemaInfo.getType()) {
             case JSON:
-                return GenericJsonSchema.of(schemaInfo,useProvidedSchemaAsReaderSchema);
             case AVRO:
-                return GenericAvroSchema.of(schemaInfo,useProvidedSchemaAsReaderSchema);
+                return (Schema) GenericSchemaImpl.of(schemaInfo, useProvidedSchemaAsReaderSchema);
             case PROTOBUF_NATIVE:
-                return GenericProtobufNativeSchema.of(schemaInfo, useProvidedSchemaAsReaderSchema);
+                return (Schema)GenericProtobufNativeSchema.of(schemaInfo, useProvidedSchemaAsReaderSchema);
             default:
-                throw new IllegalArgumentException("Currently auto consume works for type '"
-                        + schemaInfo.getType() + "' is not supported yet");
+                return (Schema) AutoConsumeSchema.getSchema(schemaInfo);
         }
     }
 
@@ -214,5 +213,9 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
                 throw new IllegalArgumentException("Retrieve schema instance from schema info for type '"
                     + schemaInfo.getType() + "' is not supported yet");
         }
+    }
+
+    public Schema getSchema() {
+        return schema;
     }
 }

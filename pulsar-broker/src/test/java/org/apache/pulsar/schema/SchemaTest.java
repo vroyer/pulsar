@@ -171,7 +171,7 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
         bytesRecord.setName("Tom");
         bytesRecord.setAddress("test".getBytes());
 
-        Consumer<GenericRecord> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
+        Consumer<Object> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .subscriptionName("test-sub")
                 .topic(topic)
                 .subscribe();
@@ -181,18 +181,18 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
                 .topic(topic)
                 .subscribe();
 
-        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .subscriptionName("test-sub2")
                 .topic(topic)
                 .subscribe();
 
         producer.send(bytesRecord);
 
-        Message<GenericRecord> message = consumer.receive();
+        Message<Object> message = consumer.receive();
         Message<Schemas.BytesRecord> message1 = consumer1.receive();
         Message<Object> message2 = consumer2.receive();
 
-        assertEquals(message.getValue().getField("address").getClass(),
+        assertEquals(((GenericRecord)message.getValue()).getField("address").getClass(),
                 message1.getValue().getAddress().getClass());
 
         GenericRecord value2 = (GenericRecord) message2.getValue();
@@ -234,7 +234,7 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
                 .topic(topic)
                 .subscribe();
 
-        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .subscriptionName("test-sub2")
                 .topic(topic)
                 .subscribe();
@@ -282,7 +282,7 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
                 .topic(topic)
                 .subscribe();
 
-        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.OBJECT())
+        Consumer<Object> consumer2 = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .subscriptionName("test-sub2")
                 .topic(topic)
                 .subscribe();

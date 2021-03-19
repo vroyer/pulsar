@@ -95,7 +95,7 @@ public class PulsarSink implements Sink<Object> {
     private abstract class PulsarSinkProcessorBase implements PulsarSinkProcessor<Object> {
         protected Map<String, Producer<Object>> publishProducers = new ConcurrentHashMap<>();
         protected Schema schema;
-        protected  Crypto crypto;
+        protected Crypto crypto;
 
         protected PulsarSinkProcessorBase(Schema schema, Crypto crypto) {
             this.schema = schema;
@@ -388,7 +388,7 @@ public class PulsarSink implements Sink<Object> {
     @VisibleForTesting
     Schema<Object> initializeSchema() throws ClassNotFoundException {
         if (StringUtils.isEmpty(this.pulsarSinkConfig.getTypeClassName())) {
-            return (Schema<Object>) Schema.OBJECT();
+            return (Schema<Object>) Schema.AUTO_CONSUME();
         }
 
         Class<?> typeArg = Reflections.loadClass(this.pulsarSinkConfig.getTypeClassName(), functionClassLoader);

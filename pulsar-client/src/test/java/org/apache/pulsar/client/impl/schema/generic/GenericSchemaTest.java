@@ -101,7 +101,7 @@ public class GenericSchemaTest {
     }
 
     private void testEncodeAndDecodeGenericRecord(Schema<Foo> encodeSchema,
-                                                  Schema<GenericRecord> decodeSchema) {
+                                                  Schema<Object> decodeSchema) {
         int numRecords = 10;
         for (int i = 0; i < numRecords; i++) {
             Foo foo = newFoo(i);
@@ -109,12 +109,7 @@ public class GenericSchemaTest {
 
             log.info("Decoding : {}", new String(data, UTF_8));
 
-            GenericRecord record;
-            if (decodeSchema instanceof AutoConsumeSchema) {
-                record = decodeSchema.decode(data, new byte[0]);
-            } else {
-                record = decodeSchema.decode(data);
-            }
+            GenericRecord record  = (GenericRecord)decodeSchema.decode(data);
             verifyFooRecord(record, i);
         }
     }
@@ -146,7 +141,7 @@ public class GenericSchemaTest {
                 );
 
                 // configure decode schema
-                Schema<KeyValue<GenericRecord, GenericRecord>> decodeSchema = KeyValueSchema.of(
+                Schema<KeyValue<Object, Object>> decodeSchema = KeyValueSchema.of(
                     Schema.AUTO_CONSUME(), Schema.AUTO_CONSUME()
                 );
                 decodeSchema.configureSchemaInfo(
@@ -161,13 +156,13 @@ public class GenericSchemaTest {
     }
 
     private void testEncodeAndDecodeKeyValues(Schema<KeyValue<Foo, Foo>> encodeSchema,
-                                              Schema<KeyValue<GenericRecord, GenericRecord>> decodeSchema) {
+                                              Schema<KeyValue<Object, Object>> decodeSchema) {
         int numRecords = 10;
         for (int i = 0; i < numRecords; i++) {
             Foo foo = newFoo(i);
             byte[] data = encodeSchema.encode(new KeyValue<>(foo, foo));
 
-            KeyValue<GenericRecord, GenericRecord> kv = decodeSchema.decode(data, new byte[0]);
+            KeyValue<Object, Object> kv = decodeSchema.decode(data, new byte[0]);
             verifyFooRecord(kv.getKey(), i);
             verifyFooRecord(kv.getValue(), i);
         }
@@ -186,7 +181,8 @@ public class GenericSchemaTest {
         return foo;
     }
 
-    private static void verifyFooRecord(GenericRecord record, int i) {
+    private static void verifyFooRecord(Object objectRecord, int i) {
+        GenericRecord record = (GenericRecord) objectRecord;
         Object field1 = record.getField("field1");
         assertEquals("field-1-" + i, field1, "Field 1 is " + field1.getClass());
         Object field2 = record.getField("field2");

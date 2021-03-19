@@ -27,12 +27,10 @@ import java.util.Map;
 import java.util.Optional;
 
 import org.apache.pulsar.client.impl.schema.KeyValueSchema;
-import org.apache.pulsar.client.impl.schema.ObjectSchema;
 import org.apache.pulsar.common.classification.InterfaceAudience;
 import org.apache.pulsar.common.classification.InterfaceStability;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
-import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * Pulsar Connect's Record interface. Record encapsulates the information about a record being read from a Source.
@@ -76,8 +74,10 @@ public interface Record<T> {
 
     default KeyValueSchema getKeyValueSchema() {
         Schema<?> schema = getSchema();
+        /*
         if (schema instanceof ObjectSchema)
             schema = ((ObjectSchema)schema).getInternalSchema();
+         */
         return schema instanceof KeyValueSchema ? (KeyValueSchema) schema : null;
     }
 

@@ -3879,7 +3879,7 @@ public class SimpleProducerConsumerTest extends ProducerConsumerBase {
         log.info("-- Starting {} test --", methodName);
 
         final String topic = "persistent://my-property/my-ns/deferredSchemaCompressed";
-        Consumer<GenericRecord> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
+        Consumer<Object> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .topic(topic)
                 .subscriptionName("testsub")
                 .subscribe();
@@ -3897,7 +3897,7 @@ public class SimpleProducerConsumerTest extends ProducerConsumerBase {
         producer.newMessage(Schema.AVRO(MyBean.class)).value(payload).send();
         producer.close();
 
-        GenericRecord res = consumer.receive().getValue();
+        GenericRecord res = (GenericRecord) consumer.receive().getValue();
         consumer.close();
         assertEquals(SchemaType.AVRO, res.getSchemaType());
         org.apache.avro.generic.GenericRecord nativeRecord = (org.apache.avro.generic.GenericRecord) res.getNativeRecord();
@@ -3922,7 +3922,7 @@ public class SimpleProducerConsumerTest extends ProducerConsumerBase {
         log.info("-- Starting {} test --", methodName);
 
         final String topic = "persistent://my-property/my-ns/accessSchema";
-        Consumer<GenericRecord> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
+        Consumer<Object> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .topic(topic)
                 .subscriptionName("testsub")
                 .subscribe();
@@ -3936,7 +3936,7 @@ public class SimpleProducerConsumerTest extends ProducerConsumerBase {
         producer.send(payload);
         producer.close();
 
-        GenericRecord res = consumer.receive().getValue();
+        GenericRecord res = (GenericRecord) consumer.receive().getValue();
         consumer.close();
         assertEquals(schema.getSchemaInfo().getType(), res.getSchemaType());
         org.apache.avro.generic.GenericRecord nativeAvroRecord = null;

@@ -233,7 +233,7 @@ public class SchemaTest extends PulsarTestSuite {
                 Sets.newHashSet(pulsarCluster.getClusterName())
         );
 
-        Consumer<GenericRecord> consumer = client
+        Consumer<Object> consumer = client
                 .newConsumer(Schema.AUTO_CONSUME())
                 .topic(fqtn)
                 .subscriptionName("test")
@@ -249,7 +249,7 @@ public class SchemaTest extends PulsarTestSuite {
         person.setAge(60);
         producer.send(person);
 
-        GenericRecord genericRecord = consumer.receive().getValue();
+        GenericRecord genericRecord = (GenericRecord)consumer.receive().getValue();
 
         assertEquals(genericRecord.getField("name"), "Tom Hanks");
         assertEquals(genericRecord.getField("age"), 60);

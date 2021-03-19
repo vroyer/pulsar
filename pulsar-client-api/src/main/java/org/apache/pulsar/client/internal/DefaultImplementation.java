@@ -277,17 +277,10 @@ public class DefaultImplementation {
                         .invoke(null, schemaDefinition));
     }
 
-    public static Schema<GenericRecord> newAutoConsumeSchema() {
-        return catchExceptions(
-                () -> (Schema<GenericRecord>) newClassInstance(
-                    "org.apache.pulsar.client.impl.schema.AutoConsumeSchema")
-                        .newInstance());
-    }
-
-    public static Schema<Object> newObjectSchema() {
+    public static Schema<Object> newAutoConsumeSchema() {
         return catchExceptions(
                 () -> (Schema<Object>) newClassInstance(
-                        "org.apache.pulsar.client.impl.schema.ObjectSchema")
+                    "org.apache.pulsar.client.impl.schema.AutoConsumeSchema")
                         .newInstance());
     }
 

@@ -124,8 +124,6 @@ public class InfluxDBGenericRecordSinkTest {
         AvroSchema<Cpu> schema = AvroSchema.of(Cpu.class);
 
         byte[] bytes = schema.encode(cpu);
-        AutoConsumeSchema autoConsumeSchema = new AutoConsumeSchema();
-        autoConsumeSchema.setSchema(GenericSchemaImpl.of(schema.getSchemaInfo()));
 
         Record<GenericRecord> record = PulsarRecord.<GenericRecord>builder()
             .message(message)

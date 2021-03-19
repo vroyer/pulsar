@@ -64,7 +64,7 @@ public class AbstractGenericSchemaTest {
     }
 
     private void testEncodeAndDecodeGenericRecord(Schema<org.apache.pulsar.client.schema.proto.Test.TestMessage> encodeSchema,
-                                                  Schema<GenericRecord> decodeSchema) {
+                                                  Schema<Object> decodeSchema) {
         int numRecords = 10;
         for (int i = 0; i < numRecords; i++) {
             org.apache.pulsar.client.schema.proto.Test.TestMessage testMessage = newTestMessage(i);
@@ -72,12 +72,7 @@ public class AbstractGenericSchemaTest {
 
             log.info("Decoding : {}", new String(data, UTF_8));
 
-            GenericRecord record;
-            if (decodeSchema instanceof AutoConsumeSchema) {
-                record = decodeSchema.decode(data, new byte[0]);
-            } else {
-                record = decodeSchema.decode(data);
-            }
+            GenericRecord record = (GenericRecord) decodeSchema.decode(data);
             verifyTestMessageRecord(record, i);
         }
     }

@@ -114,8 +114,6 @@ public class HbaseGenericRecordSinkTest {
         AvroSchema<Foo> schema = AvroSchema.of(SchemaDefinition.<Foo>builder().withPojo(Foo.class).build());
 
         byte[] bytes = schema.encode(obj);
-        AutoConsumeSchema autoConsumeSchema = new AutoConsumeSchema();
-        autoConsumeSchema.setSchema(GenericSchemaImpl.of(schema.getSchemaInfo()));
 
         PulsarSourceConfig pulsarSourceConfig = new PulsarSourceConfig();
         Consumer consumer = mock(Consumer.class);

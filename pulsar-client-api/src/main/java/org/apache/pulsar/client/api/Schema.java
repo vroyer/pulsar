@@ -353,7 +353,7 @@ public interface Schema<T> extends Cloneable{
     }
 
     @Deprecated
-    static Schema<GenericRecord> AUTO() {
+    static Schema<Object> AUTO() {
         return AUTO_CONSUME();
     }
 
@@ -367,12 +367,8 @@ public interface Schema<T> extends Cloneable{
      *
      * @return the auto schema instance
      */
-    static Schema<GenericRecord> AUTO_CONSUME() {
+    static Schema<Object> AUTO_CONSUME() {
         return DefaultImplementation.newAutoConsumeSchema();
-    }
-
-    static Schema<Object> OBJECT() {
-        return DefaultImplementation.newObjectSchema();
     }
 
     /**

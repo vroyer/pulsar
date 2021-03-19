@@ -72,7 +72,7 @@ public class PartitionedTopicSchemaTest extends MockedPulsarServiceBaseTest {
 
     @Test
     public void test() throws Exception {
-        Consumer<GenericRecord> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
+        Consumer<Object> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                 .topic(PARTITIONED_TOPIC)
                 .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                 .subscriptionName("test")
@@ -102,7 +102,7 @@ public class PartitionedTopicSchemaTest extends MockedPulsarServiceBaseTest {
 
         int receiveMsgCount = 0;
         for (int i = 0; i < MESSAGE_COUNT_PER_PARTITION; i++) {
-            Message<GenericRecord> message = consumer.receive();
+            Message<Object> message = consumer.receive();
             Assert.assertNotNull(message);
             receiveMsgCount++;
         }

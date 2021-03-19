@@ -448,18 +448,18 @@ public class SimpleTypedProducerConsumerTest extends ProducerConsumerBase {
            producer.send(new AvroEncodedPojo(message));
        }
 
-       Consumer<GenericRecord> consumer = pulsarClient
+       Consumer<Object> consumer = pulsarClient
            .newConsumer(Schema.AUTO_CONSUME())
            .topic("persistent://my-property/use/my-ns/my-topic1")
            .subscriptionName("my-subscriber-name")
            .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
            .subscribe();
 
-       Message<GenericRecord> msg = null;
+       Message<Object> msg = null;
        Set<String> messageSet = Sets.newHashSet();
        for (int i = 0; i < 10; i++) {
            msg = consumer.receive(5, TimeUnit.SECONDS);
-           GenericRecord receivedMessage = msg.getValue();
+           GenericRecord receivedMessage = (GenericRecord)msg.getValue();
            log.debug("Received message: [{}]", receivedMessage);
            String expectedMessage = "my-message-" + i;
            String actualMessage = (String) receivedMessage.getField("message");
@@ -497,17 +497,17 @@ public class SimpleTypedProducerConsumerTest extends ProducerConsumerBase {
            producer.send(new AvroEncodedPojo(message));
        }
 
-       Reader<GenericRecord> reader = pulsarClient
+       Reader<Object> reader = pulsarClient
                .newReader(Schema.AUTO_CONSUME())
                .topic("persistent://my-property/use/my-ns/my-topic1")
                .startMessageId(MessageId.earliest)
            .create();
 
-       Message<GenericRecord> msg = null;
+       Message<Object> msg = null;
        Set<String> messageSet = Sets.newHashSet();
        for (int i = 0; i < 10; i++) {
            msg = reader.readNext();
-           GenericRecord receivedMessage = msg.getValue();
+           GenericRecord receivedMessage = (GenericRecord) msg.getValue();
            log.debug("Received message: [{}]", receivedMessage);
            String expectedMessage = "my-message-" + i;
            String actualMessage = (String) receivedMessage.getField("message");
@@ -569,18 +569,18 @@ public class SimpleTypedProducerConsumerTest extends ProducerConsumerBase {
             }
         }
 
-        Consumer<GenericRecord> consumer = pulsarClient
+        Consumer<Object> consumer = pulsarClient
             .newConsumer(Schema.AUTO_CONSUME())
             .topic("persistent://my-property/use/my-ns/my-topic1")
             .subscriptionName("my-subscriber-name")
             .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
             .subscribe();
 
-        Message<GenericRecord> msg = null;
+        Message<Object> msg = null;
         Set<String> messageSet = Sets.newHashSet();
         for (int i = 0; i < 20; i++) {
             msg = consumer.receive(5, TimeUnit.SECONDS);
-            GenericRecord receivedMessage = msg.getValue();
+            GenericRecord receivedMessage = (GenericRecord) msg.getValue();
             log.debug("Received message: [{}]", receivedMessage);
             String expectedMessage = "my-message-" + i;
             String actualMessage = (String) receivedMessage.getField("message");

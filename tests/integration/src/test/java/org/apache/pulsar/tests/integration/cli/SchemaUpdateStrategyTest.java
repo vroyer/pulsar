@@ -81,8 +81,8 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
                 p.send(v2Data);
             }
 
-            Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
-            try (Consumer<GenericRecord> consumer = pulsarClient.newConsumer(schema)
+            Schema<Object> schema = Schema.AUTO_CONSUME();
+            try (Consumer<Object> consumer = pulsarClient.newConsumer(schema)
                  .topic(topicName)
                  .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
                  .subscriptionName("sub")
@@ -90,11 +90,11 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
             ) {
                 log.info("Schema Info : {}", schema.getSchemaInfo().getSchemaDefinition());
 
-                Message<GenericRecord> msg1 = consumer.receive();
-                v1Data.assertEqualToRecord(msg1.getValue());
+                Message<Object> msg1 = consumer.receive();
+                v1Data.assertEqualToRecord((GenericRecord)msg1.getValue());
 
-                Message<GenericRecord> msg2 = consumer.receive();
-                v2Data.assertEqualToRecord(msg2.getValue());
+                Message<Object> msg2 = consumer.receive();
+                v2Data.assertEqualToRecord((GenericRecord)msg2.getValue());
             }
         }
     }
@@ -125,8 +125,8 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
                 p.send(v2Data);
             }
 
-            Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
-            try (Consumer<GenericRecord> consumer = pulsarClient.newConsumer(schema)
+            Schema<Object> schema = Schema.AUTO_CONSUME();
+            try (Consumer<Object> consumer = pulsarClient.newConsumer(schema)
                  .topic(topicName)
                  .subscriptionName("sub")
                  .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
@@ -134,14 +134,14 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
             ) {
                 log.info("Schema Info : {}", schema.getSchemaInfo().getSchemaDefinition());
 
-                Message<GenericRecord> msg1 = consumer.receive();
-                v1Data.assertEqualToRecord(msg1.getValue());
+                Message<Object> msg1 = consumer.receive();
+                v1Data.assertEqualToRecord((GenericRecord)msg1.getValue());
 
-                Message<GenericRecord> msg2 = consumer.receive();
-                v3Data.assertEqualToRecord(msg2.getValue());
+                Message<Object> msg2 = consumer.receive();
+                v3Data.assertEqualToRecord((GenericRecord)msg2.getValue());
 
-                Message<GenericRecord> msg3 = consumer.receive();
-                v2Data.assertEqualToRecord(msg3.getValue());
+                Message<Object> msg3 = consumer.receive();
+                v2Data.assertEqualToRecord((GenericRecord)msg3.getValue());
             }
         }
     }
@@ -174,8 +174,8 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
                 p.send(v3Data);
             }
 
-            Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
-            try (Consumer<GenericRecord> consumer = pulsarClient.newConsumer(schema)
+            Schema<Object> schema = Schema.AUTO_CONSUME();
+            try (Consumer<Object> consumer = pulsarClient.newConsumer(schema)
                  .topic(topicName)
                  .subscriptionName("sub")
                  .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
@@ -183,11 +183,11 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
             ) {
                 log.info("Schema Info : {}", schema.getSchemaInfo().getSchemaDefinition());
 
-                Message<GenericRecord> msg1 = consumer.receive();
-                v1Data.assertEqualToRecord(msg1.getValue());
+                Message<Object> msg1 = consumer.receive();
+                v1Data.assertEqualToRecord((GenericRecord)msg1.getValue());
 
-                Message<GenericRecord> msg2 = consumer.receive();
-                v3Data.assertEqualToRecord(msg2.getValue());
+                Message<Object> msg2 = consumer.receive();
+                v3Data.assertEqualToRecord((GenericRecord)msg2.getValue());
             }
         }
 
@@ -226,8 +226,8 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
                 p.send(v4Data);
             }
 
-            Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
-            try (Consumer<GenericRecord> consumer = pulsarClient.newConsumer(schema)
+            Schema<Object> schema = Schema.AUTO_CONSUME();
+            try (Consumer<Object> consumer = pulsarClient.newConsumer(schema)
                  .topic(topicName)
                  .subscriptionName("sub")
                  .subscriptionInitialPosition(SubscriptionInitialPosition.Earliest)
@@ -235,11 +235,11 @@ public class SchemaUpdateStrategyTest extends PulsarTestSuite {
             ) {
                 log.info("Schema Info : {}", schema.getSchemaInfo().getSchemaDefinition());
 
-                Message<GenericRecord> msg1 = consumer.receive();
-                v1Data.assertEqualToRecord(msg1.getValue());
+                Message<Object> msg1 = consumer.receive();
+                v1Data.assertEqualToRecord((GenericRecord)msg1.getValue());
 
-                Message<GenericRecord> msg2 = consumer.receive();
-                v4Data.assertEqualToRecord(msg2.getValue());
+                Message<Object> msg2 = consumer.receive();
+                v4Data.assertEqualToRecord((GenericRecord)msg2.getValue());
             }
         }
     }

@@ -27,7 +27,6 @@ import org.apache.pulsar.client.impl.MessageImpl;
 import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericAvroSchema;
-import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.functions.source.PulsarRecord;
 import org.testng.annotations.AfterMethod;
@@ -91,7 +90,7 @@ public class SolrGenericRecordSinkTest {
 
         byte[] bytes = schema.encode(obj);
         AutoConsumeSchema autoConsumeSchema = new AutoConsumeSchema();
-        autoConsumeSchema.setSchema(GenericSchemaImpl.of(schema.getSchemaInfo()));
+        autoConsumeSchema.generateSchema(schema.getSchemaInfo());
 
         Record<GenericRecord> record = PulsarRecord.<GenericRecord>builder()
             .message(message)

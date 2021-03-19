@@ -74,7 +74,7 @@ public class PulsarSource extends PushSource<Object> implements MessageListener<
             log.info("Creating consumers for topic : {}, schema : {}, schemaInfo: {}",
                     topic, conf.getSchema(), conf.getSchema().getSchemaInfo());
 
-            ConsumerBuilder<Object> cb = pulsarClient.newConsumer(Schema.OBJECT())
+            ConsumerBuilder<Object> cb = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
                     .subscriptionName(pulsarSourceConfig.getSubscriptionName())
                     .subscriptionInitialPosition(pulsarSourceConfig.getSubscriptionPosition())
                     .subscriptionType(pulsarSourceConfig.getSubscriptionType());

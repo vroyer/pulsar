@@ -21,6 +21,7 @@ package org.apache.pulsar.client.impl;
 import static com.google.common.base.Preconditions.checkNotNull;
 import static java.nio.charset.StandardCharsets.UTF_8;
 
+import com.fasterxml.jackson.module.jsonSchema.types.ObjectSchema;
 import com.google.common.collect.Maps;
 
 import io.netty.buffer.ByteBuf;
@@ -41,8 +42,8 @@ import java.util.stream.Collectors;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.MessageId;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.impl.schema.AutoConsumeSchema;
 import org.apache.pulsar.client.impl.schema.KeyValueSchema;
-import org.apache.pulsar.client.impl.schema.ObjectSchema;
 import org.apache.pulsar.common.api.EncryptionContext;
 import org.apache.pulsar.common.api.proto.BrokerEntryMetadata;
 import org.apache.pulsar.common.api.proto.KeyValue;
@@ -361,8 +362,8 @@ public class MessageImpl<T> implements Message<T> {
     }
 
     private KeyValueSchema getKeyValueSchema() {
-        if (schema instanceof ObjectSchema) {
-            return (KeyValueSchema) ((ObjectSchema)schema).getInternalSchema();
+        if (schema instanceof AutoConsumeSchema) {
+            return (KeyValueSchema) ((AutoConsumeSchema)schema).getSchema();
         } else {
             return (KeyValueSchema) schema;
         }

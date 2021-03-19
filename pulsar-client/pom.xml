@@ -148,6 +148,12 @@
       <artifactId>jcip-annotations</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>com.kjetland</groupId>
+      <artifactId>mbknor-jackson-jsonschema_2.12</artifactId>
+      <version>1.0.39</version>
+    </dependency>
+
     <!-- Testing dependencies -->
     <dependency>
       <groupId>${project.groupId}</groupId>

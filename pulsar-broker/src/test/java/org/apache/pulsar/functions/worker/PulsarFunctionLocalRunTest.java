@@ -527,7 +527,7 @@ public class PulsarFunctionLocalRunTest {
         //produce message to sourceTopic
         Producer<Object> producer = pulsarClient.newProducer(schema).topic(sourceTopic).create();
         //consume message from sinkTopic
-        Consumer<GenericRecord> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME()).topic(sinkTopic).subscriptionName("sub").subscribe();
+        Consumer<Object> consumer = pulsarClient.newConsumer(Schema.AUTO_CONSUME()).topic(sinkTopic).subscriptionName("sub").subscribe();
 
         FunctionConfig functionConfig = createFunctionConfig(tenant, namespacePortion, functionName,
                 sourceTopic, sinkTopic, subscriptionName);
@@ -579,10 +579,10 @@ public class PulsarFunctionLocalRunTest {
 
         //consume message from sinkTopic
         for (int i = 0; i < totalMsgs; i++) {
-            Message<GenericRecord> msg = consumer.receive(5, TimeUnit.SECONDS);
+            Message<Object> msg = consumer.receive(5, TimeUnit.SECONDS);
             String receivedPropertyValue = msg.getProperty(propertyKey);
             assertEquals(propertyValue, receivedPropertyValue);
-            assertEquals(msg.getValue().getField("baseValue"),  10 + i);
+            assertEquals(((GenericRecord)msg.getValue()).getField("baseValue"),  10 + i);
             consumer.acknowledge(msg);
         }
 
@@ -614,7 +614,7 @@ public class PulsarFunctionLocalRunTest {
         localRunner.start(false);
 
         producer.newMessage().property(propertyKey, propertyValue).value(avroTestObjectClass.newInstance()).send();
-        Message<GenericRecord> msg = consumer.receive(2, TimeUnit.SECONDS);
+        Message<Object> msg = consumer.receive(2, TimeUnit.SECONDS);
         assertEquals(msg, null);
 
         producer.close();

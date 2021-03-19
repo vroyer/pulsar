@@ -18,23 +18,10 @@
  */
 package org.apache.pulsar.io.influxdb.v2;
 
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.anyList;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
-import static org.testng.Assert.assertEquals;
-import static org.testng.Assert.assertFalse;
-import static org.testng.Assert.assertTrue;
 import com.google.common.collect.Maps;
 import com.influxdb.client.InfluxDBClient;
 import com.influxdb.client.WriteApiBlocking;
 import com.influxdb.client.write.Point;
-import java.time.Instant;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
 import lombok.Data;
 import org.apache.avro.util.Utf8;
 import org.apache.pulsar.client.api.Message;
@@ -52,6 +39,15 @@ import org.apache.pulsar.functions.source.PulsarRecord;
 import org.mockito.ArgumentCaptor;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.*;
+import static org.testng.Assert.*;
 
 public class InfluxDBSinkTest {
     @Data
@@ -99,9 +95,7 @@ public class InfluxDBSinkTest {
     public void testJsonSchema() {
         JSONSchema<Cpu> schema = JSONSchema.of(Cpu.class);
 
-        AutoConsumeSchema autoConsumeSchema = new AutoConsumeSchema();
-        autoConsumeSchema.setSchema(GenericSchemaImpl.of(schema.getSchemaInfo()));
-        GenericSchema<GenericRecord> genericSchema = GenericSchemaImpl.of(autoConsumeSchema.getSchemaInfo());
+        GenericSchema<GenericRecord> genericSchema = GenericSchemaImpl.of(schema.getSchemaInfo());
 
         assertFalse(genericSchema instanceof GenericAvroSchema);
 
@@ -121,9 +115,7 @@ public class InfluxDBSinkTest {
     public void testAvroSchema() {
         AvroSchema<Cpu> schema = AvroSchema.of(Cpu.class);
 
-        AutoConsumeSchema autoConsumeSchema = new AutoConsumeSchema();
-        autoConsumeSchema.setSchema(GenericSchemaImpl.of(schema.getSchemaInfo()));
-        GenericSchema<GenericRecord> genericAvroSchema = GenericSchemaImpl.of(autoConsumeSchema.getSchemaInfo());
+        GenericSchema<GenericRecord> genericAvroSchema = GenericSchemaImpl.of(schema.getSchemaInfo());
 
         assertTrue(genericAvroSchema instanceof GenericAvroSchema);
 
