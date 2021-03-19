@@ -351,7 +351,9 @@ public class PulsarSink implements Sink<Object> {
         SinkRecord sinkRecord = (SinkRecord) record;
         TypedMessageBuilder<Object> msg = pulsarSinkProcessor.newMessage(sinkRecord);
 
-        if (record.getKey().isPresent() && !(record.getSchema() instanceof KeyValueSchema &&
+        if (record.getKey().isPresent() && !
+
+                (record.getSchema() instanceof KeyValueSchema &&
                 ((KeyValueSchema) record.getSchema()).getKeyValueEncodingType() == KeyValueEncodingType.SEPARATED)) {
             msg.key(record.getKey().get());
         }
