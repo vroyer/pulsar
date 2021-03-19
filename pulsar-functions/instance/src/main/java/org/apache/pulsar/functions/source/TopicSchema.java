@@ -97,24 +97,27 @@ public class TopicSchema {
      * If the topic is already created, we should be able to fetch the schema type (avro, json, ...)
      */
     private SchemaType getSchemaTypeOrDefault(String topic, Class<?> clazz) {
+        if (clazz == Object.class) {
+            return SchemaType.OBJECT;
+        } else if (GenericRecord.class.isAssignableFrom(clazz)) {
+            return SchemaType.AUTO_CONSUME;
+        } else if (byte[].class.equals(clazz)
+                || ByteBuf.class.equals(clazz)
+                || ByteBuffer.class.equals(clazz)) {
+            // if function uses bytes, we should ignore
+            return SchemaType.NONE;
+        } else {
             Optional<SchemaInfo> schema = ((PulsarClientImpl) client).getSchema(topic).join();
-            if (schema.isPresent()) {
-                if (schema.get().getType() == SchemaType.NONE) {
+            if(schema.isPresent()) {
+                if(schema.get().getType() == SchemaType.NONE) {
                     return getDefaultSchemaType(clazz);
                 } else {
                     return schema.get().getType();
                 }
+            } else {
+                return getDefaultSchemaType(clazz);
             }
-
-            if (GenericRecord.class.isAssignableFrom(clazz)) {
-                return SchemaType.AUTO_CONSUME;
-            } else if (byte[].class.equals(clazz)
-                    || ByteBuf.class.equals(clazz)
-                    || ByteBuffer.class.equals(clazz)) {
-                // if function uses bytes, we should ignore
-                return SchemaType.NONE;
-            }
-            return getDefaultSchemaType(clazz);
+        }
     }
 
     private static SchemaType getDefaultSchemaType(Class<?> clazz) {
@@ -144,6 +147,8 @@ public class TopicSchema {
 
     private static <T> Schema<T> newSchemaInstance(Class<T> clazz, SchemaType type, ConsumerConfig conf) {
         switch (type) {
+        case OBJECT:
+            return (Schema<T>) Schema.OBJECT();
         case NONE:
             return (Schema<T>) Schema.BYTES;
 

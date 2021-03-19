@@ -167,7 +167,12 @@ public enum SchemaType {
     /**
      * Auto Publish Type.
      */
-    AUTO_PUBLISH(-4);
+    AUTO_PUBLISH(-4),
+
+    /**
+     * Discover schema from the schema registry.
+     */
+    OBJECT(-5);
 
     int value;
 
@@ -206,6 +211,7 @@ public enum SchemaType {
           case -2: return AUTO;
           case -3: return AUTO_CONSUME;
           case -4: return AUTO_PUBLISH;
+          case -5: return OBJECT;
           default: return NONE;
         }
       }
