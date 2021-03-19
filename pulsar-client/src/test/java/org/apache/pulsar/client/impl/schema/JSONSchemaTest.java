@@ -18,32 +18,31 @@
  */
 package org.apache.pulsar.client.impl.schema;
 
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.FOO_FIELDS;
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_ALLOW_NULL;
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_NOT_ALLOW_NULL;
-import static org.testng.Assert.assertEquals;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
-import java.util.Collections;
-import java.util.List;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
+import org.apache.pulsar.client.api.schema.GenericRecord;
+import org.apache.pulsar.client.api.schema.GenericRecordBuilder;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Bar;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.DerivedFoo;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Foo;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBar;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBarList;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
+import org.apache.pulsar.client.impl.schema.generic.GenericJsonSchema;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
 import org.testng.Assert;
 import org.testng.annotations.Test;
+
+import java.util.Collections;
+import java.util.List;
+
+import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
+import static org.testng.Assert.assertEquals;
 
 @Slf4j
 public class JSONSchemaTest {
@@ -367,5 +366,34 @@ public class JSONSchemaTest {
         byte[] encoded = jsonSchema.encode(pc);
         PC roundtrippedPc = jsonSchema.decode(encoded);
         assertEquals(roundtrippedPc, pc);
+    }
+
+    @Test
+    public void testDateAndTimestamp() {
+        JSONSchema<PC> pcJsonSchema = JSONSchema.of(PC.class);
+
+        Seller seller = new Seller("USA","oakstreet",9999);
+        PC pc = new PC("dell","g3",2020, GPU.AMD, seller);
+
+        byte[] bytes = pcJsonSchema.encode(pc);
+        Assert.assertTrue(bytes.length > 0);
+
+        Object pc2 = pcJsonSchema.decode(bytes);
+        assertEquals(pc, pc2);
+
+        GenericJsonSchema genericJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
+        GenericRecordBuilder genericRecordBuilder = genericJsonSchema.newRecordBuilder();
+        GenericRecord genericRecord = genericRecordBuilder
+                .set("brand", "dell")
+                .set("model","g3")
+                .set("year", 2020)
+                .set("gpu", GPU.AMD)
+                .set("seller", seller)
+                .build();
+
+        byte[] bytes3 = genericJsonSchema.encode(genericRecord);
+        Assert.assertTrue(bytes3.length > 0);
+        Object pc3 = pcJsonSchema.decode(bytes3);
+        assertEquals(pc, pc3);
     }
 }
