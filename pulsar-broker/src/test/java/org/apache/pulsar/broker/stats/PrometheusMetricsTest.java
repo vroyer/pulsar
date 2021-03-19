@@ -71,6 +71,8 @@ import org.apache.pulsar.broker.service.persistent.PersistentTopic;
 import org.apache.pulsar.broker.stats.prometheus.PrometheusMetricsGenerator;
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.Producer;
+import org.apache.pulsar.client.api.PulsarClient;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.awaitility.Awaitility;
 import org.testng.annotations.AfterMethod;
@@ -91,6 +93,7 @@ public class PrometheusMetricsTest extends BrokerTestBase {
     @Override
     protected void setup() throws Exception {
         super.baseSetup();
+        AuthenticationProviderToken.resetMetrics();
     }
 
     @AfterMethod(alwaysRun = true)
@@ -825,6 +828,9 @@ public class PrometheusMetricsTest extends BrokerTestBase {
         provider.close();
     }
 
+    // Investigate issue
+    // java.lang.AssertionError: line pulsar_broker_publish_latency{cluster="test",quantile="0.0"} +Inf does not match pattern
+    // ^(\w+)\{([^\}]+)\}\s(-?[\d\w\.-]+)(\s(\d+))?$ expected [true] but found [false]
     @Test
     public void testExpiringTokenMetrics() throws Exception {
         SecretKey secretKey = AuthTokenUtils.createSecretKey(SignatureAlgorithm.HS256);
@@ -886,6 +892,9 @@ public class PrometheusMetricsTest extends BrokerTestBase {
         provider.close();
     }
 
+    // Investigate issue
+    // java.lang.AssertionError: line pulsar_broker_publish_latency{cluster="test",quantile="0.0"} +Inf does not match pattern
+    // ^(\w+)\{([^\}]+)\}\s(-?[\d\w\.-]+)(\s(\d+))?$ expected [true] but found [false]
     @Test
     public void testParsingWithPositiveInfinityValue() {
         Multimap<String, Metric> metrics = parseMetrics("pulsar_broker_publish_latency{cluster=\"test\",quantile=\"0.0\"} +Inf");
@@ -954,8 +963,6 @@ public class PrometheusMetricsTest extends BrokerTestBase {
         consumer.close();
     }
 
-
-
     @Test
     void testParseMetrics() throws IOException {
         String sampleMetrics = IOUtils.toString(getClass().getClassLoader()
@@ -964,7 +971,7 @@ public class PrometheusMetricsTest extends BrokerTestBase {
     }
 
     /**
-     * Hacky parsing of Prometheus text format. Sould be good enough for unit tests
+     * Hacky parsing of Prometheus text format. Should be good enough for unit tests
      */
     private static Multimap<String, Metric> parseMetrics(String metrics) {
         Multimap<String, Metric> parsed = ArrayListMultimap.create();
