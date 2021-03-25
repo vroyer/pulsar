@@ -196,7 +196,7 @@ public abstract class AbstractAutoConsumeSchema <T> implements Schema<T> {
                     KeyValueSchemaInfo.decodeKeyValueSchemaInfo(schemaInfo);
                 Schema<?> keySchema = getSchema(kvSchemaInfo.getKey());
                 Schema<?> valueSchema = getSchema(kvSchemaInfo.getValue());
-                return KeyValueSchema.of(keySchema, valueSchema);
+                return KeyValueSchema.of(keySchema, valueSchema, KeyValueSchemaInfo.decodeKeyValueEncodingType(schemaInfo));
             default:
                 throw new IllegalArgumentException("Retrieve schema instance from schema info for type '"
                     + schemaInfo.getType() + "' is not supported yet");
