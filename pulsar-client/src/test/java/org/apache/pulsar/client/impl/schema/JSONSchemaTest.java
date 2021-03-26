@@ -27,6 +27,7 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
+import org.apache.pulsar.client.api.schema.Field;
 import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.api.schema.GenericRecordBuilder;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
@@ -43,6 +44,7 @@ import java.util.List;
 
 import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertTrue;
 
 @Slf4j
 public class JSONSchemaTest {
@@ -369,7 +371,7 @@ public class JSONSchemaTest {
     }
 
     @Test
-    public void testDateAndTimestamp() {
+    public void testJsonGenericRecordBuilder() {
         JSONSchema<PC> pcJsonSchema = JSONSchema.of(PC.class);
 
         Seller seller = new Seller("USA","oakstreet",9999);
@@ -395,5 +397,8 @@ public class JSONSchemaTest {
         Assert.assertTrue(bytes3.length > 0);
         Object pc3 = pcJsonSchema.decode(bytes3);
         assertEquals(pc, pc3);
+        for(Field field : genericRecord.getFields()) {
+            assertTrue(genericJsonSchema.getFields().contains(field));
+        }
     }
 }
