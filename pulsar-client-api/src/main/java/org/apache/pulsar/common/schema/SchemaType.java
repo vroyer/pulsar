@@ -167,7 +167,12 @@ public enum SchemaType {
     /**
      * Auto Publish Type.
      */
-    AUTO_PUBLISH(-4);
+    AUTO_PUBLISH(-4),
+
+    /**
+     * Auto detect Schema Object.
+     */
+    OBJECT(-5);
 
     int value;
 

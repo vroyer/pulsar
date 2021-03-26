@@ -97,7 +97,9 @@ public class TopicSchema {
      * If the topic is already created, we should be able to fetch the schema type (avro, json, ...)
      */
     private SchemaType getSchemaTypeOrDefault(String topic, Class<?> clazz) {
-        if (GenericRecord.class.isAssignableFrom(clazz)) {
+        if (Object.class.equals(clazz)) {
+            return SchemaType.OBJECT;
+        } else if (GenericRecord.class.isAssignableFrom(clazz)) {
             return SchemaType.AUTO_CONSUME;
         } else if (byte[].class.equals(clazz)
                 || ByteBuf.class.equals(clazz)
@@ -147,6 +149,9 @@ public class TopicSchema {
         switch (type) {
         case NONE:
             return (Schema<T>) Schema.BYTES;
+
+        case OBJECT:
+            return (Schema<T>) Schema.OBJECT();
 
         case AUTO_CONSUME:
         case AUTO:
