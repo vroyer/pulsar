@@ -388,12 +388,12 @@ public class JSONSchemaTest {
         JSONSchema<PC> pcJsonSchema = JSONSchema.of(PC.class);
         System.out.println("pcJsonSchema="+pcJsonSchema.schemaInfo);
 
-        RecordSchemaBuilder pcSchemaBuilder = SchemaBuilder.record("seller");
+        RecordSchemaBuilder pcSchemaBuilder = SchemaBuilder.record("pc");
         pcSchemaBuilder.field("brand").type(SchemaType.STRING);
         pcSchemaBuilder.field("model").type(SchemaType.STRING);
         pcSchemaBuilder.field("gpu").type(SchemaType.STRING);
         pcSchemaBuilder.field("year").type(SchemaType.INT64);
-        //pcSchemaBuilder.field("seller").type(SchemaType.JSON).optional();
+        pcSchemaBuilder.field("seller", sellerGenericSchema).type(SchemaType.JSON).optional();
         SchemaInfo pcGenericSchemaInfo = pcSchemaBuilder.build(SchemaType.JSON);
         GenericSchemaImpl pcGenericSchema = GenericSchemaImpl.of(pcGenericSchemaInfo);
         System.out.println("pcGenericSchemaInfo="+pcGenericSchemaInfo);
@@ -444,6 +444,6 @@ public class JSONSchemaTest {
         GenericRecord seller3Record = (GenericRecord) pc3Record.getField("seller");
         assertEquals("USA", seller3Record.getField("state"));
         assertEquals("oakstreet", seller3Record.getField("street"));
-        assertEquals("9999", seller3Record.getField("zipCode"));
+        assertEquals(9999, seller3Record.getField("zipCode"));
     }
 }

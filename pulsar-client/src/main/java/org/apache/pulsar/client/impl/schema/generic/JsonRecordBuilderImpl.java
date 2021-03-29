@@ -49,8 +49,11 @@ public class JsonRecordBuilderImpl implements GenericRecordBuilder {
      */
     @Override
     public GenericRecordBuilder set(String fieldName, Object value) {
-        if (value instanceof GenericRecord && !(value instanceof GenericJsonRecord)) {
-            throw new IllegalArgumentException("JSON Record Builder doesn't support non-JSON record as a field");
+        if (value instanceof GenericRecord) {
+            if (!(value instanceof GenericJsonRecord))
+                throw new IllegalArgumentException("JSON Record Builder doesn't support non-JSON record as a field");
+            GenericJsonRecord genericJsonRecord = (GenericJsonRecord) value;
+            value = genericJsonRecord.getJsonNode();
         }
 
         map.put(fieldName, value);
