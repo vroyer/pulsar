@@ -26,7 +26,6 @@ import org.apache.pulsar.client.api.schema.GenericRecordBuilder;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class JsonRecordBuilderImpl implements GenericRecordBuilder {
 
@@ -34,7 +33,6 @@ public class JsonRecordBuilderImpl implements GenericRecordBuilder {
 
     private final GenericSchemaImpl genericSchema;
     private Map<String, Object> map = new HashMap<>();
-    private Map<String, Field> fields = new HashMap<>();
 
     public JsonRecordBuilderImpl(GenericSchemaImpl genericSchema) {
         this.genericSchema = genericSchema;
@@ -57,7 +55,6 @@ public class JsonRecordBuilderImpl implements GenericRecordBuilder {
         }
 
         map.put(fieldName, value);
-        fields.put(fieldName, new Field(fieldName, map.size()));
         return this;
     }
 
@@ -83,7 +80,6 @@ public class JsonRecordBuilderImpl implements GenericRecordBuilder {
     @Override
     public GenericRecordBuilder clear(String fieldName) {
         map.remove(fieldName);
-        fields.remove(fieldName);
         return this;
     }
 
