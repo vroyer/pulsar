@@ -27,10 +27,16 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
-import org.apache.pulsar.client.api.schema.*;
-import org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
-import org.apache.pulsar.client.impl.schema.generic.GenericJsonRecord;
-import org.apache.pulsar.client.impl.schema.generic.GenericJsonSchema;
+import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.client.api.schema.GenericRecord;
+import org.apache.pulsar.client.api.schema.RecordSchemaBuilder;
+import org.apache.pulsar.client.api.schema.SchemaBuilder;
+import org.apache.pulsar.client.api.schema.SchemaDefinition;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Bar;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.DerivedFoo;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.Foo;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBar;
+import org.apache.pulsar.client.impl.schema.SchemaTestUtils.NestedBarList;
 import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
 import org.apache.pulsar.common.schema.SchemaInfo;
 import org.apache.pulsar.common.schema.SchemaType;
@@ -42,7 +48,9 @@ import org.testng.annotations.Test;
 import java.util.Collections;
 import java.util.List;
 
-import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
+import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.FOO_FIELDS;
+import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_ALLOW_NULL;
+import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_NOT_ALLOW_NULL;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 
@@ -372,9 +380,7 @@ public class JSONSchemaTest {
 
     @Test
     public void testJsonGenericRecordBuilder() {
-
         JSONSchema<Seller> sellerJsonSchema = JSONSchema.of(Seller.class);
-        System.out.println("sellerJsonSchema="+sellerJsonSchema.schemaInfo);
 
         RecordSchemaBuilder sellerSchemaBuilder = SchemaBuilder.record("seller");
         sellerSchemaBuilder.field("state").type(SchemaType.STRING);
@@ -382,11 +388,8 @@ public class JSONSchemaTest {
         sellerSchemaBuilder.field("zipCode").type(SchemaType.INT64);
         SchemaInfo sellerSchemaInfo = sellerSchemaBuilder.build(SchemaType.JSON);
         GenericSchemaImpl sellerGenericSchema = GenericSchemaImpl.of(sellerSchemaInfo);
-        System.out.println("sellerGenericSchema="+sellerSchemaInfo);
-
 
         JSONSchema<PC> pcJsonSchema = JSONSchema.of(PC.class);
-        System.out.println("pcJsonSchema="+pcJsonSchema.schemaInfo);
 
         RecordSchemaBuilder pcSchemaBuilder = SchemaBuilder.record("pc");
         pcSchemaBuilder.field("brand").type(SchemaType.STRING);
@@ -396,21 +399,15 @@ public class JSONSchemaTest {
         pcSchemaBuilder.field("seller", sellerGenericSchema).type(SchemaType.JSON).optional();
         SchemaInfo pcGenericSchemaInfo = pcSchemaBuilder.build(SchemaType.JSON);
         GenericSchemaImpl pcGenericSchema = GenericSchemaImpl.of(pcGenericSchemaInfo);
-        System.out.println("pcGenericSchemaInfo="+pcGenericSchemaInfo);
 
         Seller seller = new Seller("USA","oakstreet",9999);
         PC pc = new PC("dell","g3",2020, GPU.AMD, seller);
 
         byte[] bytes = pcJsonSchema.encode(pc);
-        System.out.println("pcJsonSchema="+new String(bytes));
-        System.out.println("pcJsonSchema.schemaInfo="+new String(pcJsonSchema.schemaInfo.getSchema()));
         Assert.assertTrue(bytes.length > 0);
 
         Object pc2 = pcJsonSchema.decode(bytes);
         assertEquals(pc, pc2);
-
-        //GenericJsonSchema genericPcJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
-        //GenericJsonSchema genericSellerJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
 
         GenericRecord sellerRecord = sellerGenericSchema.newRecordBuilder()
                 .set("state", "USA")
@@ -427,8 +424,6 @@ public class JSONSchemaTest {
                 .build();
 
         byte[] bytes3 = pcGenericSchema.encode(pcRecord);
-        System.out.println("json=" + new String(bytes3));
-
         Assert.assertTrue(bytes3.length > 0);
         GenericRecord pc3Record = pcGenericSchema.decode(bytes3);
 
