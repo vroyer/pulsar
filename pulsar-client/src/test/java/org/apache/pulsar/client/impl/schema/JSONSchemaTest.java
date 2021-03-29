@@ -27,12 +27,12 @@ import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.pulsar.client.api.SchemaSerializationException;
-import org.apache.pulsar.client.api.schema.Field;
-import org.apache.pulsar.client.api.schema.GenericRecord;
-import org.apache.pulsar.client.api.schema.GenericRecordBuilder;
-import org.apache.pulsar.client.api.schema.SchemaDefinition;
+import org.apache.pulsar.client.api.schema.*;
 import org.apache.pulsar.client.impl.schema.SchemaTestUtils.*;
+import org.apache.pulsar.client.impl.schema.generic.GenericJsonRecord;
 import org.apache.pulsar.client.impl.schema.generic.GenericJsonSchema;
+import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
+import org.apache.pulsar.common.schema.SchemaInfo;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.json.JSONException;
 import org.skyscreamer.jsonassert.JSONAssert;
@@ -372,33 +372,78 @@ public class JSONSchemaTest {
 
     @Test
     public void testJsonGenericRecordBuilder() {
+
+        JSONSchema<Seller> sellerJsonSchema = JSONSchema.of(Seller.class);
+        System.out.println("sellerJsonSchema="+sellerJsonSchema.schemaInfo);
+
+        RecordSchemaBuilder sellerSchemaBuilder = SchemaBuilder.record("seller");
+        sellerSchemaBuilder.field("state").type(SchemaType.STRING);
+        sellerSchemaBuilder.field("street").type(SchemaType.STRING);
+        sellerSchemaBuilder.field("zipCode").type(SchemaType.INT64);
+        SchemaInfo sellerSchemaInfo = sellerSchemaBuilder.build(SchemaType.JSON);
+        GenericSchemaImpl sellerGenericSchema = GenericSchemaImpl.of(sellerSchemaInfo);
+        System.out.println("sellerGenericSchema="+sellerSchemaInfo);
+
+
         JSONSchema<PC> pcJsonSchema = JSONSchema.of(PC.class);
+        System.out.println("pcJsonSchema="+pcJsonSchema.schemaInfo);
+
+        RecordSchemaBuilder pcSchemaBuilder = SchemaBuilder.record("seller");
+        pcSchemaBuilder.field("brand").type(SchemaType.STRING);
+        pcSchemaBuilder.field("model").type(SchemaType.STRING);
+        pcSchemaBuilder.field("gpu").type(SchemaType.STRING);
+        pcSchemaBuilder.field("year").type(SchemaType.INT64);
+        //pcSchemaBuilder.field("seller").type(SchemaType.JSON).optional();
+        SchemaInfo pcGenericSchemaInfo = pcSchemaBuilder.build(SchemaType.JSON);
+        GenericSchemaImpl pcGenericSchema = GenericSchemaImpl.of(pcGenericSchemaInfo);
+        System.out.println("pcGenericSchemaInfo="+pcGenericSchemaInfo);
 
         Seller seller = new Seller("USA","oakstreet",9999);
         PC pc = new PC("dell","g3",2020, GPU.AMD, seller);
 
         byte[] bytes = pcJsonSchema.encode(pc);
+        System.out.println("pcJsonSchema="+new String(bytes));
+        System.out.println("pcJsonSchema.schemaInfo="+new String(pcJsonSchema.schemaInfo.getSchema()));
         Assert.assertTrue(bytes.length > 0);
 
         Object pc2 = pcJsonSchema.decode(bytes);
         assertEquals(pc, pc2);
 
-        GenericJsonSchema genericJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
-        GenericRecordBuilder genericRecordBuilder = genericJsonSchema.newRecordBuilder();
-        GenericRecord genericRecord = genericRecordBuilder
+        //GenericJsonSchema genericPcJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
+        //GenericJsonSchema genericSellerJsonSchema = new GenericJsonSchema(pcJsonSchema.schemaInfo);
+
+        GenericRecord sellerRecord = sellerGenericSchema.newRecordBuilder()
+                .set("state", "USA")
+                .set("street", "oakstreet")
+                .set("zipCode", 9999)
+                .build();
+
+        GenericRecord pcRecord = pcGenericSchema.newRecordBuilder()
                 .set("brand", "dell")
                 .set("model","g3")
                 .set("year", 2020)
                 .set("gpu", GPU.AMD)
-                .set("seller", seller)
+                .set("seller", sellerRecord)
                 .build();
 
-        byte[] bytes3 = genericJsonSchema.encode(genericRecord);
+        byte[] bytes3 = pcGenericSchema.encode(pcRecord);
+        System.out.println("json=" + new String(bytes3));
+
         Assert.assertTrue(bytes3.length > 0);
-        Object pc3 = pcJsonSchema.decode(bytes3);
-        assertEquals(pc, pc3);
-        for(Field field : genericRecord.getFields()) {
-            assertTrue(genericJsonSchema.getFields().contains(field));
+        GenericRecord pc3Record = pcGenericSchema.decode(bytes3);
+
+        for(Field field : pc3Record.getFields()) {
+            assertTrue(pcGenericSchema.getFields().contains(field));
         }
+        assertEquals("dell", pc3Record.getField("brand"));
+        assertEquals("g3", pc3Record.getField("model"));
+        assertEquals(2020, pc3Record.getField("year"));
+        assertEquals(GPU.AMD.toString(), pc3Record.getField("gpu"));
+
+
+        GenericRecord seller3Record = (GenericRecord) pc3Record.getField("seller");
+        assertEquals("USA", seller3Record.getField("state"));
+        assertEquals("oakstreet", seller3Record.getField("street"));
+        assertEquals("9999", seller3Record.getField("zipCode"));
     }
 }
