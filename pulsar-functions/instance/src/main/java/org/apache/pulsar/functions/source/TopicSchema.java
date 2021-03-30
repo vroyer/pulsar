@@ -28,6 +28,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.pulsar.client.api.PulsarClient;
 import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
 import org.apache.pulsar.client.impl.PulsarClientImpl;
@@ -99,7 +100,7 @@ public class TopicSchema {
     private SchemaType getSchemaTypeOrDefault(String topic, Class<?> clazz) {
         if (Object.class == clazz) {
             return SchemaType.NONE;
-        } else if (GenericRecord.class.isAssignableFrom(clazz)) {
+        } else if (GenericObject.class.isAssignableFrom(clazz)) {
             return SchemaType.AUTO_CONSUME;
         } else if (byte[].class.equals(clazz)
                 || ByteBuf.class.equals(clazz)
@@ -146,9 +147,6 @@ public class TopicSchema {
     }
 
     private static <T> Schema<T> newSchemaInstance(Class<T> clazz, SchemaType type, ConsumerConfig conf) {
-        if (clazz == Object.class) {
-            return (Schema<T>) Schema.OBJECT();
-        }
         switch (type) {
         case NONE:
             return (Schema<T>) Schema.BYTES;
