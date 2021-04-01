@@ -41,12 +41,13 @@ import org.apache.pulsar.client.api.Producer;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.GenericRecord;
-import org.apache.pulsar.client.api.schema.GenericObjectWrapper;
 import org.apache.pulsar.client.api.schema.SchemaDefinition;
 import org.apache.pulsar.common.naming.TopicDomain;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.common.policies.data.ClusterData;
 import org.apache.pulsar.common.policies.data.TenantInfo;
+import org.apache.pulsar.common.schema.KeyValue;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaType;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -243,7 +244,7 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
         Message<GenericRecord> message3 = consumer2.receive();
 
         assertEquals("foo", message.getValue());
-        assertTrue(message3.getValue() instanceof GenericObjectWrapper);
+        assertEquals(message3.getValue().getClass().getName(), "org.apache.pulsar.client.impl.schema.GenericObjectWrapper");
         assertEquals(SchemaType.STRING, message3.getValue().getSchemaType());
         assertEquals("foo", message3.getValue().getNativeObject());
 
@@ -293,9 +294,55 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
         Message<GenericRecord> message3 = consumer2.receive();
 
         assertEquals("foo".getBytes(StandardCharsets.UTF_8), message.getValue());
-        assertTrue(message3.getValue() instanceof GenericObjectWrapper);
+        assertEquals(message3.getValue().getClass().getName(), "org.apache.pulsar.client.impl.schema.GenericObjectWrapper");
         assertEquals(SchemaType.BYTES, message3.getValue().getSchemaType());
         assertEquals("foo".getBytes(StandardCharsets.UTF_8), message3.getValue().getNativeObject());
+
+        producer.close();
+        consumer.close();
+        consumer2.close();
+    }
+
+    @Test
+    public void testKeyValueSchema() throws Exception {
+        final String tenant = PUBLIC_TENANT;
+        final String namespace = "test-namespace-" + randomName(16);
+        final String topicName = "test-string-schema";
+
+        final String topic = TopicName.get(
+                TopicDomain.persistent.value(),
+                tenant,
+                namespace,
+                topicName).toString();
+
+        admin.namespaces().createNamespace(
+                tenant + "/" + namespace,
+                Sets.newHashSet(CLUSTER_NAME));
+
+        admin.topics().createPartitionedTopic(topic, 2);
+
+        Producer<KeyValue<String, Integer>> producer = pulsarClient
+                .newProducer(Schema.KeyValue(Schema.STRING, Schema.INT32, KeyValueEncodingType.INLINE))
+                .topic(topic)
+                .create();
+
+        producer.send(new KeyValue<>("foo", 123));
+
+        Consumer<KeyValue<String, Integer>> consumer = pulsarClient.newConsumer(Schema.KeyValue(Schema.STRING, Schema.INT32, KeyValueEncodingType.INLINE))
+                .subscriptionName("test-sub")
+                .topic(topic)
+                .subscribe();
+
+        Consumer<GenericRecord> consumer2 = pulsarClient.newConsumer(Schema.AUTO_CONSUME())
+                .subscriptionName("test-sub2")
+                .topic(topic)
+                .subscribe();
+
+        producer.send(new KeyValue<>("foo", 123));
+
+        Message<KeyValue<String, Integer>> message = consumer.receive();
+        Message<GenericRecord> message2 = consumer2.receive();
+        assertEquals(message.getValue(), message2.getValue().getNativeObject());
 
         producer.close();
         consumer.close();
