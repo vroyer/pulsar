@@ -41,9 +41,10 @@ import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.impl.schema.KeyValueSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericAvroRecord;
 import org.apache.pulsar.client.impl.schema.generic.GenericJsonRecord;
+import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.SchemaType;
+import org.apache.pulsar.functions.api.KVRecord;
 import org.apache.pulsar.functions.api.Record;
-import org.apache.pulsar.io.core.KeyValue;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.annotations.Connector;
@@ -128,17 +129,18 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         System.out.println(" schema=" + record.getSchema());
         System.out.println(" value="+record.getValue());
         System.out.println(" schemaType=" + record.getValue().getSchemaType());
-        if (SchemaType.KEY_VALUE.equals(record.getValue().getSchemaType())) {
-            key = ((KeyValue) record.getValue()).getKey();
-            keySchema = ((KeyValueSchema) record.getSchema()).getKeySchema();
-            value = ((KeyValue) record.getValue()).getValue();
-            valueSchema = ((KeyValueSchema) record.getSchema()).getValueSchema();
+        if (record instanceof KVRecord) {
+            key = ((KeyValue) record.getValue().getNativeObject()).getKey();
+            keySchema = ((KVRecord) record).getKeySchema();
+            value = ((KeyValue) record.getValue().getNativeObject()).getValue();
+            valueSchema = ((KVRecord) record).getValueSchema();
         } else {
-            value = record.getValue();
+            value = record.getValue().getNativeObject();
             valueSchema = record.getSchema();
+            key = record.getKey().orElse(null);
         }
 
-        String id = record.getKey().get();
+        String id = key + "";
         if (keySchema != null) {
             switch(keySchema.getSchemaInfo().getType()) {
                 case STRING:
