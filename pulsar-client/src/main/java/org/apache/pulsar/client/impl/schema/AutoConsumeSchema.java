@@ -117,7 +117,6 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
     }
 
     @Override
-<<<<<<< HEAD
     public Schema<GenericRecord> clone() {
         Schema<GenericRecord> schema = Schema.AUTO_CONSUME();
         if (this.schema != null) {
@@ -131,6 +130,7 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
         return schema;
     }
 
+    @Override
     public Optional<Object> getNativeSchema() {
         ensureSchemaInitialized();
         if (schema == null) {

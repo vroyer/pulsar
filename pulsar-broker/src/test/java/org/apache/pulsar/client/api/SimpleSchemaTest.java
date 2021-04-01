@@ -528,7 +528,12 @@ public class SimpleSchemaTest extends ProducerConsumerBase {
                 Message<GenericRecord> data = c.receive();
                 assertNotNull(data.getSchemaVersion());
                 assertEquals(data.getValue().getField("i"), i);
+                MessageImpl impl = (MessageImpl) data;
+
+                org.apache.avro.Schema avroSchema = (org.apache.avro.Schema) impl.getSchema().getNativeSchema().get();
+                assertNotNull(avroSchema);
             }
+
         }
     }
 
