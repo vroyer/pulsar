@@ -320,6 +320,7 @@ public class MessageImpl<T> implements Message<T> {
         }
     }
 
+    @Override
     public Schema<T> getSchema() {
         return this.schema;
     }
