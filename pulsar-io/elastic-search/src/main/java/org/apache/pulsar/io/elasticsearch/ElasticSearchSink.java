@@ -18,7 +18,10 @@
  */
 package org.apache.pulsar.io.elasticsearch;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
@@ -58,8 +61,10 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
-import tech.allegro.schema.json2avro.converter.AvroConversionException;
-import tech.allegro.schema.json2avro.converter.JsonAvroConverter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.JsonEncoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.generic.GenericDatumWriter;
 
 /**
  * The base abstract class for ElasticSearch sinks.
@@ -129,11 +134,11 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         System.out.println(" schema=" + record.getSchema());
         System.out.println(" value="+record.getValue());
         System.out.println(" schemaType=" + record.getValue().getSchemaType());
-        if (record instanceof KVRecord) {
+        if (SchemaType.KEY_VALUE.equals(record.getValue().getSchemaType())) {
             key = ((KeyValue) record.getValue().getNativeObject()).getKey();
-            keySchema = ((KVRecord) record).getKeySchema();
+            keySchema = ((KeyValueSchema) record.getSchema()).getKeySchema();
             value = ((KeyValue) record.getValue().getNativeObject()).getValue();
-            valueSchema = ((KVRecord) record).getValueSchema();
+            valueSchema = ((KeyValueSchema) record.getSchema()).getValueSchema();
         } else {
             value = record.getValue().getNativeObject();
             valueSchema = record.getSchema();
@@ -142,55 +147,13 @@ public class ElasticSearchSink implements Sink<GenericObject> {
 
         String id = key + "";
         if (keySchema != null) {
-            switch(keySchema.getSchemaInfo().getType()) {
-                case STRING:
-                    id = (String) key;
-                    break;
-                case INT8:
-                    id = Byte.toString((Byte)key);
-                    break;
-                case INT16:
-                    id = Short.toString((Short)key);
-                    break;
-                case INT32:
-                    id = Integer.toString((Integer)key);
-                    break;
-                case INT64:
-                    id = Long.toString((Long)key);
-                    break;
-                default:
-                    throw new UnsupportedOperationException();
-            }
+            key = stringify(keySchema, key);
         }
-
 
         String doc = null;
         if (value != null) {
             if (valueSchema != null) {
-                switch(valueSchema.getSchemaInfo().getType()) {
-                    case STRING:
-                        doc = (String) value;
-                        break;
-                    case JSON:
-                        GenericJsonRecord genericJsonRecord = (GenericJsonRecord) value;
-                        try {
-                            doc = objectMapper.writeValueAsString(genericJsonRecord.getJsonNode());
-                        } catch(JsonProcessingException e) {
-                            log.error("Failed to write GenericJsonRecord as String" + e);
-                        }
-                        break;
-                    case AVRO:
-                        GenericAvroRecord genericAvroRecord = (GenericAvroRecord) value;
-                        try {
-                            JsonAvroConverter converter = new JsonAvroConverter();
-                            doc = new String(converter.convertToJson(genericAvroRecord.getAvroRecord()));
-                        } catch(AvroConversionException e) {
-                            log.error("Failed to write GenericAvroRecord as String" + e);
-                        }
-                        break;
-                    default:
-                        throw new UnsupportedOperationException();
-                }
+                doc = stringify(valueSchema, value);
             } else {
                 doc = value.toString();
             }
@@ -222,5 +185,50 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 " id=" + id +
                 " doc=" + doc);
         return Pair.of(id, doc);
+    }
+
+    public String stringify(Schema<?> schema, Object val) {
+        switch(schema.getSchemaInfo().getType()) {
+            case INT8:
+                return Byte.toString((Byte)val);
+            case INT16:
+                return  Short.toString((Short)val);
+            case INT32:
+                return  Integer.toString((Integer)val);
+            case INT64:
+                return  Long.toString((Long)val);
+            case STRING:
+                return (String) val;
+            case JSON:
+                try {
+                    GenericJsonRecord genericJsonRecord = (GenericJsonRecord) val;
+                    return objectMapper.writeValueAsString(genericJsonRecord.getJsonNode());
+                } catch(JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            case AVRO:
+                try {
+                    GenericAvroRecord genericAvroRecord = (GenericAvroRecord) val;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    writeAsJson(genericAvroRecord.getAvroRecord(), baos);
+                    return baos.toString();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Writes provided {@link org.apache.avro.generic.GenericRecord} into the provided
+     * {@link OutputStream} as JSON.
+     */
+    public static void writeAsJson(org.apache.avro.generic.GenericRecord record, OutputStream out) throws Exception {
+        DatumWriter<org.apache.avro.generic.GenericRecord> writer =
+                new GenericDatumWriter<org.apache.avro.generic.GenericRecord>(record.getSchema());
+        JsonEncoder encoder = EncoderFactory.get().jsonEncoder(record.getSchema(), out);
+        writer.write(record, encoder);
+        encoder.flush();
     }
 }
