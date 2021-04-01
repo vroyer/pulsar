@@ -128,11 +128,7 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
 
     @Override
     public void received(Consumer<T> consumer, Message<T> message) {
-        Schema<T> schema = null;
-        if (message instanceof MessageImpl) {
-            MessageImpl impl = (MessageImpl) message;
-            schema = impl.getSchema();
-        }
+        Schema<T> schema = message.getSchema();
         Record<T> record = PulsarRecord.<T>builder()
                 .message(message)
                 .schema(schema)

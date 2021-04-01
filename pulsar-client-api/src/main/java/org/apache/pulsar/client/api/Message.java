@@ -202,6 +202,14 @@ public interface Message<T> {
     byte[] getSchemaVersion();
 
     /**
+     * Get the message schema if available
+     * @return The message Schema
+     */
+    default Schema getSchema() {
+        return null;
+    }
+
+    /**
      * Check whether the message is replicated from other cluster.
      *
      * @since 2.4.0
