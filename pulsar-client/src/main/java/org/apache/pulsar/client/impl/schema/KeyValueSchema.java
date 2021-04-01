@@ -139,10 +139,20 @@ public class KeyValueSchema<K, V> implements Schema<KeyValue<K, V>> {
         }
     }
 
+    @Override
     public KeyValue<K, V> decode(byte[] bytes) {
         return decode(bytes, null);
     }
 
+    /**
+     * Decode KeyValue when key is INLINE.
+     * @param bytes
+     *            the byte array to decode
+     * @param schemaVersion
+     *            the schema version to decode the object. null indicates using latest version.
+     * @return
+     */
+    @Override
     public KeyValue<K, V> decode(byte[] bytes, byte[] schemaVersion) {
         if (this.keyValueEncodingType == KeyValueEncodingType.SEPARATED) {
             throw new SchemaSerializationException("This method cannot be used under this SEPARATED encoding type");
@@ -151,7 +161,19 @@ public class KeyValueSchema<K, V> implements Schema<KeyValue<K, V>> {
         return KeyValue.decode(bytes, (keyBytes, valueBytes) -> decode(keyBytes, valueBytes, schemaVersion));
     }
 
+    /**
+     * Decode KeyValue when key is SEPARATED.
+     * @param keyBytes
+     * @param valueBytes
+     * @param schemaVersion
+     * @return
+     */
+    @Override
     public KeyValue<K, V> decode(byte[] keyBytes, byte[] valueBytes, byte[] schemaVersion) {
+        if (this.keyValueEncodingType == KeyValueEncodingType.INLINE) {
+            throw new SchemaSerializationException("This method cannot be used under this INLINE encoding type");
+        }
+
         K k;
         if (keyBytes == null) {
             k = null;

@@ -336,56 +336,16 @@ public class MessageImpl<T> implements Message<T> {
 
     @Override
     public T getValue() {
-        if (schema.getSchemaInfo() != null && SchemaType.KEY_VALUE == schema.getSchemaInfo().getType()) {
-            if (schema.supportSchemaVersioning()) {
-                return getKeyValueBySchemaVersion();
-            } else {
-                return getKeyValue();
-            }
-        } else {
-            if (msgMetadata.isNullValue()) {
-                return null;
-            }
-            // check if the schema passed in from client supports schema versioning or not
-            // this is an optimization to only get schema version when necessary
-            if (schema.supportSchemaVersioning()) {
-                byte[] schemaVersion = getSchemaVersion();
-                if (null == schemaVersion) {
-                    return schema.decode(getData());
-                } else {
-                    return schema.decode(getData(), schemaVersion);
-                }
-            } else {
-                return schema.decode(getData());
-            }
+        if (msgMetadata.isNullValue()) {
+            return null;
         }
-    }
 
-    private KeyValueSchema getKeyValueSchema() {
-        if (schema instanceof AutoConsumeSchema) {
-            return (KeyValueSchema) ((AutoConsumeSchema)schema).getInternalSchema();
-        } else {
-            return (KeyValueSchema) schema;
+        // check if the schema passed in from client supports schema versioning or not
+        // this is an optimization to only get schema version when necessary
+        if (schema.supportSchemaVersioning() && msgMetadata.hasSchemaVersion()) {
+            return schema.decode(getKeyBytes(), getData(), getSchemaVersion());
         }
-    }
-
-    private T getKeyValueBySchemaVersion() {
-        KeyValueSchema kvSchema = getKeyValueSchema();
-        byte[] schemaVersion = getSchemaVersion();
-        if (kvSchema.getKeyValueEncodingType() == KeyValueEncodingType.SEPARATED) {
-            return (T) kvSchema.decode(getKeyBytes(), getData(), schemaVersion);
-        } else {
-            return schema.decode(getData(), schemaVersion);
-        }
-    }
-
-    private T getKeyValue() {
-        KeyValueSchema kvSchema = getKeyValueSchema();
-        if (kvSchema.getKeyValueEncodingType() == KeyValueEncodingType.SEPARATED) {
-            return (T) kvSchema.decode(getKeyBytes(), getData(), null);
-        } else {
-            return schema.decode(getData());
-        }
+        return schema.decode(getKeyBytes(), getData());
     }
 
     @Override

@@ -118,6 +118,11 @@ public interface Schema<T> extends Cloneable{
         return decode(bytes);
     }
 
+    default T decode(byte[] keyBytes, byte[] valueBytes, byte[] schemaVersion) {
+        // ignore keyBytes by default
+        return decode(valueBytes, schemaVersion);
+    }
+
     /**
      * @return an object that represents the Schema associated metadata
      */

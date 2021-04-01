@@ -26,7 +26,9 @@ import org.apache.pulsar.client.api.schema.SchemaInfoProvider;
 import org.apache.pulsar.client.impl.schema.generic.GenericProtobufNativeSchema;
 import org.apache.pulsar.client.impl.schema.generic.GenericSchemaImpl;
 import org.apache.pulsar.common.schema.KeyValue;
+import org.apache.pulsar.common.schema.KeyValueEncodingType;
 import org.apache.pulsar.common.schema.SchemaInfo;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import java.util.concurrent.ExecutionException;
 
@@ -74,7 +76,12 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
     }
 
     @Override
-    public GenericRecord decode(byte[] bytes, byte[] schemaVersion) {
+    public GenericRecord decode(byte[] valueBytes, byte[] schemaVersion) {
+        return decode(null, valueBytes, schemaVersion);
+    }
+
+    @Override
+    public GenericRecord decode(byte[] keyBytes, byte[] valueBytes, byte[] schemaVersion) {
         if (schema == null) {
             SchemaInfo schemaInfo = null;
             try {
@@ -97,7 +104,14 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
                     componentName, topicName, schemaInfo.getSchemaDefinition());
         }
         ensureSchemaInitialized();
-        return adapt(schema.decode(bytes, schemaVersion), schemaVersion);
+
+        if (SchemaType.KEY_VALUE.equals(schema.getSchemaInfo().getType())) {
+            KeyValueSchema keyValueSchema = (KeyValueSchema) schema;
+            if (KeyValueEncodingType.SEPARATED.equals(keyValueSchema.getKeyValueEncodingType())) {
+                return adapt(keyValueSchema.decode(keyBytes, valueBytes, schemaVersion), schemaVersion);
+            }
+        }
+        return adapt(schema.decode(valueBytes, schemaVersion), schemaVersion);
     }
 
     @Override
