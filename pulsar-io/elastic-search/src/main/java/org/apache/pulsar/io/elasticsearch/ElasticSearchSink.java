@@ -18,7 +18,10 @@
  */
 package org.apache.pulsar.io.elasticsearch;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.io.ByteArrayOutputStream;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.Map;
@@ -44,6 +47,10 @@ import org.elasticsearch.action.index.IndexResponse;
 import org.elasticsearch.client.*;
 import org.elasticsearch.common.settings.Settings;
 import org.elasticsearch.common.xcontent.XContentType;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.JsonEncoder;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.generic.GenericDatumWriter;
 
 /**
  * The base abstract class for ElasticSearch sinks.
@@ -94,26 +101,42 @@ public class ElasticSearchSink implements Sink<byte[]> {
         }
     }
 
-    public KeyValue<String, byte[]> extractKeyValue(Record<byte[]> record) {
-        String key = record.getKey().orElse("");
-        return new KeyValue<>(key, record.getValue());
-    }
+    /**
+     * Extract ES _id and _source using the Schema if available.
+     * @param record
+     * @return A pair for _id and _source
+     */
+    public Pair<String, String> extractIdAndDocument(Record<GenericObject> record) {
+        Object key = null;
+        Object value = null;
+        Schema<?> keySchema = null;
+        Schema<?> valueSchema = null;
 
-    private void createIndexIfNeeded() throws IOException {
-        GetIndexRequest request = new GetIndexRequest();
-        request.indices(elasticSearchConfig.getIndexName());
-        boolean exists = getClient().indices().exists(request, RequestOptions.DEFAULT);
+        System.out.println(" schema=" + record.getSchema());
+        System.out.println(" value="+record.getValue());
+        System.out.println(" schemaType=" + record.getValue().getSchemaType());
+        if (SchemaType.KEY_VALUE.equals(record.getValue().getSchemaType())) {
+            key = ((KeyValue) record.getValue().getNativeObject()).getKey();
+            keySchema = ((KeyValueSchema) record.getSchema()).getKeySchema();
+            value = ((KeyValue) record.getValue().getNativeObject()).getValue();
+            valueSchema = ((KeyValueSchema) record.getSchema()).getValueSchema();
+        } else {
+            value = record.getValue().getNativeObject();
+            valueSchema = record.getSchema();
+            key = record.getKey().orElse(null);
+        }
 
-        if (!exists) {
-            CreateIndexRequest cireq = new CreateIndexRequest(elasticSearchConfig.getIndexName());
+        String id = key + "";
+        if (keySchema != null) {
+            key = stringify(keySchema, key);
+        }
 
-            cireq.settings(Settings.builder()
-               .put("index.number_of_shards", elasticSearchConfig.getIndexNumberOfShards())
-               .put("index.number_of_replicas", elasticSearchConfig.getIndexNumberOfReplicas()));
-
-            CreateIndexResponse ciresp = getClient().indices().create(cireq, RequestOptions.DEFAULT);
-            if (!ciresp.isAcknowledged() || !ciresp.isShardsAcknowledged()) {
-                throw new RuntimeException("Unable to create index.");
+        String doc = null;
+        if (value != null) {
+            if (valueSchema != null) {
+                doc = stringify(valueSchema, value);
+            } else {
+                doc = value.toString();
             }
         }
     }
@@ -152,5 +175,50 @@ public class ElasticSearchSink implements Sink<byte[]> {
           client = new RestHighLevelClient(builder);
         }
         return client;
+    }
+
+    public String stringify(Schema<?> schema, Object val) {
+        switch(schema.getSchemaInfo().getType()) {
+            case INT8:
+                return Byte.toString((Byte)val);
+            case INT16:
+                return  Short.toString((Short)val);
+            case INT32:
+                return  Integer.toString((Integer)val);
+            case INT64:
+                return  Long.toString((Long)val);
+            case STRING:
+                return (String) val;
+            case JSON:
+                try {
+                    GenericJsonRecord genericJsonRecord = (GenericJsonRecord) val;
+                    return objectMapper.writeValueAsString(genericJsonRecord.getJsonNode());
+                } catch(JsonProcessingException e) {
+                    throw new RuntimeException(e);
+                }
+            case AVRO:
+                try {
+                    GenericAvroRecord genericAvroRecord = (GenericAvroRecord) val;
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    writeAsJson(genericAvroRecord.getAvroRecord(), baos);
+                    return baos.toString();
+                } catch(Exception e) {
+                    e.printStackTrace();
+                }
+            default:
+                throw new UnsupportedOperationException();
+        }
+    }
+
+    /**
+     * Writes provided {@link org.apache.avro.generic.GenericRecord} into the provided
+     * {@link OutputStream} as JSON.
+     */
+    public static void writeAsJson(org.apache.avro.generic.GenericRecord record, OutputStream out) throws Exception {
+        DatumWriter<org.apache.avro.generic.GenericRecord> writer =
+                new GenericDatumWriter<org.apache.avro.generic.GenericRecord>(record.getSchema());
+        JsonEncoder encoder = EncoderFactory.get().jsonEncoder(record.getSchema(), out);
+        writer.write(record, encoder);
+        encoder.flush();
     }
 }
