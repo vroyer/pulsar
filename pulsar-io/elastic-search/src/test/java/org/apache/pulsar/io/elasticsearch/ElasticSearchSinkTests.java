@@ -21,6 +21,9 @@ package org.apache.pulsar.io.elasticsearch;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import net.andreinc.mockneat.MockNeat;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.reflect.ReflectData;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.common.schema.KeyValue;
@@ -40,6 +43,7 @@ import org.testng.annotations.BeforeClass;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
 
+import java.io.ByteArrayOutputStream;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
@@ -161,4 +165,5 @@ public class ElasticSearchSinkTests {
                 .map(gson::toJson)
                 .val();
     }
+
 }
