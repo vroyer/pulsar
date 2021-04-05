@@ -126,7 +126,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
 
         String id = key + "";
         if (keySchema != null) {
-            key = stringify(keySchema, key);
+            id = stringify(keySchema, key);
         }
 
         String doc = null;
@@ -138,7 +138,13 @@ public class ElasticSearchSink implements Sink<GenericObject> {
             }
         }
 
-        if (id == null && doc != null && elasticSearchConfig.getPrimaryFields() != null) {
+        // if id==null, extract the id from the JSON, AVRO or PROTOBUF value
+        if (id == null
+                && doc != null
+                && elasticSearchConfig.getPrimaryFields() != null
+                && (SchemaType.JSON.equals(valueSchema.getSchemaInfo().getType())
+                    || SchemaType.AVRO.equals(valueSchema.getSchemaInfo().getType())
+                    || SchemaType.PROTOBUF.equals(valueSchema.getSchemaInfo().getType()))) {
             // extract the PK from the JSON document
             try {
                 JsonNode jsonNode = objectMapper.readTree(doc);
@@ -146,11 +152,12 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 for(String field : elasticSearchConfig.getPrimaryFields().split(",")) {
                     if (sb.length() > 1)
                         sb.append(",");
-                    sb.append(jsonNode.get(field));
+                    sb.append(objectMapper.writeValueAsString(jsonNode.get(field)));
                 }
                 id = sb.append("]").toString();
             } catch(JsonProcessingException e) {
-                System.out.println("Failed to read JSON" + e.toString());
+                log.error("Failed to read JSON", e);
+                System.out.println("Failed to read JSON:" + e.toString());
                 e.printStackTrace();
             }
         }
@@ -159,6 +166,11 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
             schemaType = record.getSchema().getSchemaInfo().getType();
         }
+        log.debug("recordType={} schemaType={} id={} doc={}",
+                record.getClass().getName(),
+                schemaType,
+                id,
+                doc);
         System.out.println("recordType="+ record.getClass().getName() +
                 " schemaType="+ schemaType +
                 " id=" + id +
