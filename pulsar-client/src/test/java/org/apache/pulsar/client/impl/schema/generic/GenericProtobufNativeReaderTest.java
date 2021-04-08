@@ -65,6 +65,19 @@ public class GenericProtobufNativeReaderTest {
 
     }
 
+    @Test
+    public void testGetNativeRecord() {
+        message = TestMessage.newBuilder().setStringField(STRING_FIELD_VLUE).setDoubleField(DOUBLE_FIELD_VLUE).build();
+        GenericProtobufNativeReader genericProtobufNativeReader = new GenericProtobufNativeReader(genericProtobufNativeSchema.getProtobufNativeSchema());
+        GenericRecord record = genericProtobufNativeReader.read(message.toByteArray());
+        assertEquals(record.getField("stringField"), STRING_FIELD_VLUE);
+        assertEquals(record.getField("doubleField"), DOUBLE_FIELD_VLUE);
+        assertEquals(SchemaType.PROTOBUF_NATIVE, record.getSchemaType());
+        DynamicMessage nativeRecord = (DynamicMessage) record.getNativeObject();
+        assertEquals(nativeRecord.getField(nativeRecord.getDescriptorForType().findFieldByName("stringField")), STRING_FIELD_VLUE);
+        assertEquals(nativeRecord.getField(nativeRecord.getDescriptorForType().findFieldByName("doubleField")), DOUBLE_FIELD_VLUE);
+    }
+
     private final static String STRING_FIELD_VLUE = "stringFieldValue";
     private final static double DOUBLE_FIELD_VLUE = 0.2D;
 

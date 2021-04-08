@@ -67,4 +67,53 @@ public class GenericJsonRecordTest {
         Object boolValue = record.getField("on");
         assertTrue((boolean)boolValue);
     }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class Seller {
+        public String state;
+        public String street;
+        public long zipCode;
+    }
+
+    @Data
+    @AllArgsConstructor
+    @NoArgsConstructor
+    private static class PC {
+        public String brand;
+        public String model;
+        public int year;
+        public GPU gpu;
+        public Seller seller;
+    }
+
+    private enum GPU {
+        AMD, NVIDIA
+    }
+
+    @Test
+    public void testEncodeAndDecodeObject() throws JsonProcessingException {
+        // test case from issue https://github.com/apache/pulsar/issues/9605
+        JSONSchema<PC> jsonSchema = JSONSchema.of(SchemaDefinition.<PC>builder().withPojo(PC.class).build());
+        GenericSchema genericJsonSchema = GenericJsonSchema.of(jsonSchema.getSchemaInfo());
+        PC pc = new PC("dell", "alienware", 2021, GPU.AMD,
+                new Seller("WA", "street", 98004));
+        JsonNode jsonNode = ObjectMapperFactory.getThreadLocal().valueToTree(pc);
+        GenericJsonRecord genericJsonRecord =
+                new GenericJsonRecord(null, null, jsonNode, genericJsonSchema.getSchemaInfo());
+        byte[] encoded = genericJsonSchema.encode(genericJsonRecord);
+        PC roundtrippedPc = jsonSchema.decode(encoded);
+        assertEquals(roundtrippedPc, pc);
+    }
+
+    @Test
+    public void testGetNativeRecord() throws Exception{
+        byte[] json = "{\"somefield\":null}".getBytes(UTF_8);
+        GenericJsonRecord record
+                = new GenericJsonReader(Collections.singletonList(new Field("somefield", 0)))
+                .read(json, 0, json.length);
+        assertEquals(SchemaType.JSON, record.getSchemaType());
+        assertSame(record.getNativeObject(), record.getJsonNode());
+    }
 }

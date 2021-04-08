@@ -65,4 +65,13 @@ public class GenericAvroRecord extends VersionedGenericRecord {
         return record;
     }
 
+    @Override
+    public Object getNativeObject() {
+        return record;
+    }
+
+    @Override
+    public SchemaType getSchemaType() {
+        return SchemaType.AVRO;
+    }
 }

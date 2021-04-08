@@ -129,4 +129,14 @@ public class GenericJsonRecord extends VersionedGenericRecord {
         parser.setValidateDefaults(false);
         return parser.parse(schemaJson);
     }
+
+    @Override
+    public Object getNativeObject() {
+        return jn;
+    }
+
+    @Override
+    public SchemaType getSchemaType() {
+        return SchemaType.JSON;
+    }
 }

@@ -27,7 +27,7 @@ import org.apache.pulsar.common.classification.InterfaceStability;
  */
 @InterfaceAudience.Public
 @InterfaceStability.Stable
-public interface GenericRecord {
+public interface GenericRecord extends GenericObject {
 
     /**
      * Return schema version.
@@ -60,5 +60,31 @@ public interface GenericRecord {
      * @return the value object
      */
     Object getField(String fieldName);
+
+    /**
+     * Return the schema tyoe.
+     *
+     * @return the schema type
+     * @throws UnsupportedOperationException if this feature is not implemented
+     * @see SchemaType#AVRO
+     * @see SchemaType#PROTOBUF_NATIVE
+     * @see SchemaType#JSON
+     */
+    @Override
+    default SchemaType getSchemaType() {
+        throw new UnsupportedOperationException();
+    }
+
+    /**
+     * Return the internal native representation of the Record,
+     * like a AVRO GenericRecord.
+     *
+     * @return the internal representation of the record
+     * @throws UnsupportedOperationException if the operation is not supported
+     */
+    @Override
+    default Object getNativeObject() {
+        throw new UnsupportedOperationException();
+    }
 
 }

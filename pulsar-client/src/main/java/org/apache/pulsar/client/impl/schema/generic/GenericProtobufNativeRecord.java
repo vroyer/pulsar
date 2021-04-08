@@ -43,4 +43,14 @@ public class GenericProtobufNativeRecord<T extends DynamicMessage> extends Versi
     public DynamicMessage getProtobufRecord() {
         return record;
     }
+
+    @Override
+    public Object getNativeObject() {
+        return record;
+    }
+
+    @Override
+    public SchemaType getSchemaType() {
+        return SchemaType.PROTOBUF_NATIVE;
+    }
 }
