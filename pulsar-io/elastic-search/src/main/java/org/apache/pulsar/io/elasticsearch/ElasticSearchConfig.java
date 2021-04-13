@@ -91,6 +91,14 @@ public class ElasticSearchConfig implements Serializable {
     )
     private String password;
 
+    @FieldDoc(
+            required = false,
+            defaultValue = "id",
+            sensitive = true,
+            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id."
+    )
+    private String primaryFields = "id";
+
     public static ElasticSearchConfig load(String yamlFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());
         return mapper.readValue(new File(yamlFile), ElasticSearchConfig.class);
