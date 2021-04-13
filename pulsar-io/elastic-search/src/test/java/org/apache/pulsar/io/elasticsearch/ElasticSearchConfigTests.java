@@ -22,12 +22,18 @@ import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNotNull;
 import static org.testng.Assert.assertNull;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.apache.avro.Schema;
+import org.apache.avro.generic.GenericRecord;
+import org.apache.avro.generic.GenericRecordBuilder;
+import org.apache.avro.reflect.ReflectData;
+import org.apache.pulsar.io.elasticsearch.data.UserProfile;
 import org.testng.annotations.Test;
 
 public class ElasticSearchConfigTests {
@@ -42,8 +48,9 @@ public class ElasticSearchConfigTests {
         assertEquals(config.getTypeName(), "doc");
         assertEquals(config.getUsername(), "scooby");
         assertEquals(config.getPassword(), "doobie");
+        assertEquals(config.getPrimaryFields(), "id");
     }
-    
+
     @Test
     public final void loadFromMapTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
@@ -52,14 +59,16 @@ public class ElasticSearchConfigTests {
         map.put("typeName", "doc");
         map.put("username", "racerX");
         map.put("password", "go-speedie-go");
-        
+        map.put("primaryFields", "x");
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         assertNotNull(config);
         assertEquals(config.getElasticSearchUrl(), "http://localhost:90902");
         assertEquals(config.getIndexName(), "myIndex");
         assertEquals(config.getTypeName(), "doc");
         assertEquals(config.getUsername(), "racerX");
-        assertEquals(config.getPassword(), "go-speedie-go");  
+        assertEquals(config.getPassword(), "go-speedie-go");
+        assertEquals(config.getPrimaryFields(), "x");
     }
 
     @Test
@@ -74,7 +83,7 @@ public class ElasticSearchConfigTests {
         assertEquals(config.getIndexNumberOfReplicas(), 1);
         assertEquals(config.getIndexNumberOfShards(), 1);
     }
-    
+
     @Test
     public final void validValidateTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
@@ -82,12 +91,12 @@ public class ElasticSearchConfigTests {
         map.put("indexName", "myIndex");
         map.put("username", "racerX");
         map.put("password", "go-speedie-go");
-        
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         assertNotNull(config);
         config.validate();
     }
-    
+
     @Test
     public final void zeroReplicasValidateTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
@@ -96,22 +105,22 @@ public class ElasticSearchConfigTests {
         map.put("username", "racerX");
         map.put("password", "go-speedie-go");
         map.put("indexNumberOfReplicas", "0");
-        
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }
 
-    @Test(expectedExceptions = IllegalArgumentException.class, 
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Required property not set.")
     public final void missingRequiredPropertiesTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
         map.put("elasticSearchUrl", "http://localhost:90902");
-        
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }
-    
-    @Test(expectedExceptions = IllegalArgumentException.class, 
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "indexNumberOfShards must be a strictly positive integer")
     public final void invalidPropertyValueTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
@@ -120,35 +129,35 @@ public class ElasticSearchConfigTests {
         map.put("username", "racerX");
         map.put("password", "go-speedie-go");
         map.put("indexNumberOfShards", "-1");
-        
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }
-    
-    @Test(expectedExceptions = IllegalArgumentException.class, 
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Values for both Username & password are required.")
     public final void userCredentialsTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
         map.put("elasticSearchUrl", "http://localhost:90902");
         map.put("indexName", "myIndex");
         map.put("username", "racerX");
-       
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }
-    
-    @Test(expectedExceptions = IllegalArgumentException.class, 
+
+    @Test(expectedExceptions = IllegalArgumentException.class,
             expectedExceptionsMessageRegExp = "Values for both Username & password are required.")
     public final void passwordCredentialsTest() throws IOException {
         Map<String, Object> map = new HashMap<String, Object> ();
         map.put("elasticSearchUrl", "http://localhost:90902");
         map.put("indexName", "myIndex");
         map.put("password", "go-speedie-go");
-       
+
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }
-    
+
     private File getFile(String name) {
         ClassLoader classLoader = getClass().getClassLoader();
         return new File(classLoader.getResource(name).getFile());

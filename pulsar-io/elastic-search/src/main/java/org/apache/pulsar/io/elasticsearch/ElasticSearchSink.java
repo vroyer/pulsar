@@ -18,39 +18,31 @@
  */
 package org.apache.pulsar.io.elasticsearch;
 
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.OutputStream;
-import java.io.ByteArrayOutputStream;
-import java.net.MalformedURLException;
-import java.net.URL;
-import java.util.Map;
-
-import org.apache.commons.lang3.StringUtils;
-import org.apache.http.HttpHost;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CredentialsProvider;
-import org.apache.http.impl.client.BasicCredentialsProvider;
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.avro.generic.GenericDatumWriter;
+import org.apache.avro.io.DatumWriter;
+import org.apache.avro.io.EncoderFactory;
+import org.apache.avro.io.JsonEncoder;
+import org.apache.commons.lang3.tuple.Pair;
+import org.apache.pulsar.client.api.Schema;
+import org.apache.pulsar.client.api.schema.GenericObject;
+import org.apache.pulsar.client.impl.schema.KeyValueSchema;
+import org.apache.pulsar.client.impl.schema.generic.GenericAvroRecord;
+import org.apache.pulsar.client.impl.schema.generic.GenericJsonRecord;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.KeyValue;
 import org.apache.pulsar.io.core.Sink;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.core.annotations.Connector;
 import org.apache.pulsar.io.core.annotations.IOType;
-import org.elasticsearch.action.DocWriteResponse;
-import org.elasticsearch.action.admin.indices.create.CreateIndexRequest;
-import org.elasticsearch.action.admin.indices.create.CreateIndexResponse;
-import org.elasticsearch.action.admin.indices.get.GetIndexRequest;
-import org.elasticsearch.action.index.IndexRequest;
-import org.elasticsearch.action.index.IndexResponse;
-import org.elasticsearch.client.*;
-import org.elasticsearch.common.settings.Settings;
-import org.elasticsearch.common.xcontent.XContentType;
-import org.apache.avro.io.DatumWriter;
-import org.apache.avro.io.JsonEncoder;
-import org.apache.avro.io.EncoderFactory;
-import org.apache.avro.generic.GenericDatumWriter;
+
+import java.io.ByteArrayOutputStream;
+import java.io.OutputStream;
+import java.util.Map;
 
 /**
  * The base abstract class for ElasticSearch sinks.
@@ -63,41 +55,41 @@ import org.apache.avro.generic.GenericDatumWriter;
     help = "A sink connector that sends pulsar messages to elastic search",
     configClass = ElasticSearchConfig.class
 )
-public class ElasticSearchSink implements Sink<byte[]> {
+@Slf4j
+public class ElasticSearchSink implements Sink<GenericObject> {
 
-    private URL url;
-    private RestHighLevelClient client;
-    private CredentialsProvider credentialsProvider;
     private ElasticSearchConfig elasticSearchConfig;
+    private ElasticsearchClient elasticsearchClient;
+    private ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
         elasticSearchConfig = ElasticSearchConfig.load(config);
         elasticSearchConfig.validate();
-        createIndexIfNeeded();
+        elasticsearchClient = new ElasticsearchClient(elasticSearchConfig);
     }
 
     @Override
     public void close() throws Exception {
-        client.close();
+        if (elasticsearchClient != null) {
+            elasticsearchClient.close();
+            elasticsearchClient = null;
+        }
     }
 
     @Override
-    public void write(Record<byte[]> record) {
-        KeyValue<String, byte[]> keyValue = extractKeyValue(record);
-        IndexRequest indexRequest = Requests.indexRequest(elasticSearchConfig.getIndexName());
-        indexRequest.type(elasticSearchConfig.getTypeName());
-        indexRequest.source(keyValue.getValue(), XContentType.JSON);
-
+    public void write(Record<GenericObject> record) {
         try {
-        IndexResponse indexResponse = getClient().index(indexRequest, RequestOptions.DEFAULT);
-            if (indexResponse.getResult().equals(DocWriteResponse.Result.CREATED)) {
-                record.ack();
+            System.out.println("Writing record.value=" + record.getValue());
+            Pair<String, String> idAndDoc = extractIdAndDocument(record);
+            if(idAndDoc.getRight() == null) {
+                elasticsearchClient.deleteDocument(record, idAndDoc);
             } else {
-                record.fail();
+                elasticsearchClient.indexDocument(record, idAndDoc);
             }
-        } catch (final IOException ex) {
-            record.fail();
+        } catch(Exception e) {
+            System.out.println("Unexpected error " + e);
+            e.printStackTrace();
         }
     }
 
@@ -128,7 +120,7 @@ public class ElasticSearchSink implements Sink<byte[]> {
 
         String id = key + "";
         if (keySchema != null) {
-            key = stringify(keySchema, key);
+            id = stringify(keySchema, key);
         }
 
         String doc = null;
@@ -139,42 +131,45 @@ public class ElasticSearchSink implements Sink<byte[]> {
                 doc = value.toString();
             }
         }
-    }
 
-    private URL getUrl() throws MalformedURLException {
-        if (url == null) {
-            url = new URL(elasticSearchConfig.getElasticSearchUrl());
+        // if id==null, extract the id from the JSON, AVRO or PROTOBUF value
+        if (id == null
+                && doc != null
+                && elasticSearchConfig.getPrimaryFields() != null
+                && (SchemaType.JSON.equals(valueSchema.getSchemaInfo().getType())
+                || SchemaType.AVRO.equals(valueSchema.getSchemaInfo().getType())
+                || SchemaType.PROTOBUF.equals(valueSchema.getSchemaInfo().getType()))) {
+            // extract the PK from the JSON document
+            try {
+                JsonNode jsonNode = objectMapper.readTree(doc);
+                StringBuffer sb = new StringBuffer("[");
+                for(String field : elasticSearchConfig.getPrimaryFields().split(",")) {
+                    if (sb.length() > 1)
+                        sb.append(",");
+                    sb.append(objectMapper.writeValueAsString(jsonNode.get(field)));
+                }
+                id = sb.append("]").toString();
+            } catch(JsonProcessingException e) {
+                log.error("Failed to read JSON", e);
+                System.out.println("Failed to read JSON:" + e.toString());
+                e.printStackTrace();
+            }
         }
-        return url;
-    }
 
-    private CredentialsProvider getCredentialsProvider() {
-
-        if (StringUtils.isEmpty(elasticSearchConfig.getUsername())
-            || StringUtils.isEmpty(elasticSearchConfig.getPassword())) {
-            return null;
+        SchemaType schemaType = null;
+        if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
+            schemaType = record.getSchema().getSchemaInfo().getType();
         }
-
-        credentialsProvider = new BasicCredentialsProvider();
-        credentialsProvider.setCredentials(AuthScope.ANY,
-                new UsernamePasswordCredentials(elasticSearchConfig.getUsername(),
-                        elasticSearchConfig.getPassword()));
-        return credentialsProvider;
-    }
-
-    private RestHighLevelClient getClient() throws MalformedURLException {
-        if (client == null) {
-          CredentialsProvider cp = getCredentialsProvider();
-          RestClientBuilder builder = RestClient.builder(new HttpHost(getUrl().getHost(),
-                  getUrl().getPort(), getUrl().getProtocol()));
-
-          if (cp != null) {
-              builder.setHttpClientConfigCallback(httpClientBuilder ->
-              httpClientBuilder.setDefaultCredentialsProvider(cp));
-          }
-          client = new RestHighLevelClient(builder);
-        }
-        return client;
+        log.debug("recordType={} schemaType={} id={} doc={}",
+                record.getClass().getName(),
+                schemaType,
+                id,
+                doc);
+        System.out.println("recordType="+ record.getClass().getName() +
+                " schemaType="+ schemaType +
+                " id=" + id +
+                " doc=" + doc);
+        return Pair.of(id, doc);
     }
 
     public String stringify(Schema<?> schema, Object val) {
