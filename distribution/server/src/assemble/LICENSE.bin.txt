@@ -470,6 +470,8 @@ The Apache Software License, Version 2.0
     - io.grpc-grpc-stub-1.18.0.jar
     - io.grpc-grpc-protobuf-nano-1.18.0.jar
     - io.grpc-grpc-testing-1.18.0.jar
+  * Perfmark
+    - io.perfmark-perfmark-api-0.19.0.jar
   * OpenCensus
     - io.opencensus-opencensus-api-0.18.0.jar
     - io.opencensus-opencensus-contrib-grpc-metrics-0.18.0.jar
@@ -515,14 +517,24 @@ The Apache Software License, Version 2.0
     - io.vertx-vertx-web-3.9.7.jar
     - io.vertx-vertx-web-common-3.9.7.jar
   * Apache ZooKeeper
+<<<<<<< HEAD
     - org.apache.zookeeper-zookeeper-jute-3.5.7.jar
+=======
+    - org.apache.zookeeper-zookeeper-jute-3.6.2.jar
+  * Snappy Java
+    - org.xerial.snappy-snappy-java-1.1.7.jar
+  * Google HTTP Client
+    - com.google.http-client-google-http-client-jackson2-1.34.0.jar
+    - com.google.http-client-google-http-client-1.34.0.jar
+    - com.google.auto.value-auto-value-annotations-1.7.jar
+    - com.google.re2j-re2j-1.2.jar
+>>>>>>> 9d3cbef9b01... [Security] Upgrade junit version to 4.13.1 to resolve CVE-2020-15250 and fix test dependency leak (#10147)
 
 BSD 3-clause "New" or "Revised" License
  * Google auth library
     - com.google.auth-google-auth-library-credentials-0.9.0.jar -- licenses/LICENSE-google-auth-library.txt
  * LevelDB -- (included in org.rocksdb.*.jar) -- licenses/LICENSE-LevelDB.txt
  * JSR305 -- com.google.code.findbugs-jsr305-3.0.2.jar -- licenses/LICENSE-JSR305.txt
- * JavaHamcrest -- org.hamcrest-hamcrest-core-1.3.jar -- licenses/LICENSE-Hamcrest.txt
 
 BSD 2-Clause License
  * HdrHistogram -- org.hdrhistogram-HdrHistogram-2.1.9.jar -- licenses/LICENSE-HdrHistogram.txt
@@ -573,10 +585,16 @@ CDDL-1.1 -- licenses/LICENSE-CDDL-1.1.txt
  * Mimepull -- org.jvnet.mimepull-mimepull-1.9.13.jar
 
 Eclipse Distribution License 1.0 -- licenses/LICENSE-EDL-1.0.txt
+<<<<<<< HEAD
  * Jakarta Activation -- com.sun.activation-jakarta.activation-1.2.2.jar
  * Jakarta XML Binding
     - jakarta.activation-jakarta.activation-api-1.2.2.jar
     - jakarta.xml.bind-jakarta.xml.bind-api-2.3.3.jar
+=======
+ * Jakarta Activation
+   - jakarta.activation-jakarta.activation-api-1.2.1.jar
+ * Jakarta XML Binding -- jakarta.xml.bind-jakarta.xml.bind-api-2.3.2.jar
+>>>>>>> 9d3cbef9b01... [Security] Upgrade junit version to 4.13.1 to resolve CVE-2020-15250 and fix test dependency leak (#10147)
 
 Eclipse Public License 1.0 -- licenses/LICENSE-AspectJ.txt
  * AspectJ
