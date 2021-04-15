@@ -103,12 +103,12 @@ public class ElasticSearchSinkTests {
                 return new GenericObject() {
                     @Override
                     public SchemaType getSchemaType() {
-                        return SchemaType.STRING;
+                        return SchemaType.KEY_VALUE;
                     }
 
                     @Override
                     public Object getNativeObject() {
-                        return getJSON();
+                        return new KeyValue("x", getJSON());
                     }
                 };
             }});
