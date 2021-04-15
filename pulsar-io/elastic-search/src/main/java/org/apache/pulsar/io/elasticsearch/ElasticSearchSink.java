@@ -201,7 +201,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                     e.printStackTrace();
                 }
             default:
-                throw new UnsupportedOperationException();
+                throw new UnsupportedOperationException("schemaType=" + schema.getSchemaInfo().getType());
         }
     }
 

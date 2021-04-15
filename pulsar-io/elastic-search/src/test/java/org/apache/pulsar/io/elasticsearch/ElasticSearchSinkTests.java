@@ -28,6 +28,7 @@ import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.common.schema.KeyValue;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.functions.api.Record;
 import org.apache.pulsar.io.core.SinkContext;
 import org.apache.pulsar.io.elasticsearch.data.Profile;
@@ -97,9 +98,19 @@ public class ElasticSearchSinkTests {
                 return Optional.of( "key-" + sequenceCounter++);
             }});
 
-        when(mockRecord.getValue()).thenAnswer(new Answer<String>() {
-            public String answer(InvocationOnMock invocation) throws Throwable {
-                return getJSON();
+        when(mockRecord.getValue()).thenAnswer(new Answer<GenericObject>() {
+            public GenericObject answer(InvocationOnMock invocation) throws Throwable {
+                return new GenericObject() {
+                    @Override
+                    public SchemaType getSchemaType() {
+                        return SchemaType.STRING;
+                    }
+
+                    @Override
+                    public Object getNativeObject() {
+                        return getJSON();
+                    }
+                };
             }});
 
         when(mockRecord.getSchema()).thenAnswer(new Answer<Schema<KeyValue<String,String>>>() {
