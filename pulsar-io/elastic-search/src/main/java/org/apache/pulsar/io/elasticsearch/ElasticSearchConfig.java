@@ -46,9 +46,9 @@ public class ElasticSearchConfig implements Serializable {
     private String elasticSearchUrl;
 
     @FieldDoc(
-        required = true,
+        required = false,
         defaultValue = "",
-        help = "The index name that the connector writes messages to"
+        help = "The index name that the connector writes messages to, with the default value set to the source topic name"
     )
     private String indexName;
 
@@ -93,11 +93,53 @@ public class ElasticSearchConfig implements Serializable {
 
     @FieldDoc(
             required = false,
-            defaultValue = "id",
-            sensitive = true,
-            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id."
+            defaultValue = "false",
+            help = "Whether to ignore the record key to build the Elasticsearch document _id from the record value."
     )
-    private String primaryFields = "id";
+    private boolean keyIgnore = false;
+
+    @FieldDoc(
+            required = false,
+            defaultValue = "id",
+            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id from the record value."
+    )
+    private String primaryFields = "";
+
+    @FieldDoc(
+            required = false,
+            defaultValue = "DELETE",
+            help = "How to handle records with null values, possible options are IGNORE, DELETE or FAIL. Default is DELETE the Elasticsearch document."
+    )
+    private NullValueAction nullValueAction = NullValueAction.DELETE;
+
+    @FieldDoc(
+            required = false,
+            defaultValue = "FAIL",
+            help = "How to handle elasticsearch rejected documents due to some malformation. Possible options are IGNORE, DELETE or FAIL. Default is FAIL the Elasticsearch document."
+    )
+    private MalformedDocAction malformedDocAction = MalformedDocAction.FAIL;
+
+    public enum MalformedDocAction {
+        IGNORE,
+        WARN,
+        FAIL
+    }
+
+    public enum NullValueAction {
+        IGNORE,
+        DELETE,
+        FAIL
+    }
+
+    public enum EncryptionProtocol {
+        PLAINTEXT,
+        SSL
+    }
+
+    public enum WriteMethod {
+        INSERT,
+        UPSERT
+    }
 
     public static ElasticSearchConfig load(String yamlFile) throws IOException {
         ObjectMapper mapper = new ObjectMapper(new YAMLFactory());

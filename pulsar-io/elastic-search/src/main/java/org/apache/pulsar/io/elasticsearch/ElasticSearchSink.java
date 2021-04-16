@@ -21,12 +21,14 @@ package org.apache.pulsar.io.elasticsearch;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.generic.GenericDatumWriter;
 import org.apache.avro.io.DatumWriter;
 import org.apache.avro.io.EncoderFactory;
 import org.apache.avro.io.JsonEncoder;
 import org.apache.commons.lang3.tuple.Pair;
+import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.GenericObject;
 import org.apache.pulsar.client.impl.schema.KeyValueSchema;
@@ -43,6 +45,7 @@ import org.apache.pulsar.io.core.annotations.IOType;
 import java.io.ByteArrayOutputStream;
 import java.io.OutputStream;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * The base abstract class for ElasticSearch sinks.
@@ -61,6 +64,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
     private ElasticSearchConfig elasticSearchConfig;
     private ElasticsearchClient elasticsearchClient;
     private ObjectMapper objectMapper = new ObjectMapper();
+    private final AtomicReference<PulsarClientException> error = new AtomicReference<>();
 
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
@@ -78,19 +82,41 @@ public class ElasticSearchSink implements Sink<GenericObject> {
     }
 
     @Override
-    public void write(Record<GenericObject> record) {
+    public void write(Record<GenericObject> record) throws Exception {
+        if (isFailed()) {
+            try {
+                close();
+            } catch (Exception e) {
+            }
+            throw error.get();
+        }
+
         try {
             System.out.println("Writing record.value=" + record.getValue());
             Pair<String, String> idAndDoc = extractIdAndDocument(record);
             if(idAndDoc.getRight() == null) {
-                elasticsearchClient.deleteDocument(record, idAndDoc);
+                switch(elasticSearchConfig.getNullValueAction()) {
+                    case DELETE:
+                        elasticsearchClient.deleteDocument(record, idAndDoc);
+                        break;
+                    case IGNORE:
+                        break;
+                    case FAIL:
+                        error.compareAndSet(null, new PulsarClientException.InvalidMessageException("Unexpected null message value"));
+                        throw error.get();
+                }
             } else {
                 elasticsearchClient.indexDocument(record, idAndDoc);
             }
         } catch(Exception e) {
             System.out.println("Unexpected error " + e);
-            e.printStackTrace();
+            log.error("write error:", e);
+            throw e;
         }
+    }
+
+    boolean isFailed() {
+        return error.get() != null;
     }
 
     /**
@@ -118,7 +144,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
             key = record.getKey().orElse(null);
         }
 
-        String id = key + "";
+        String id = key.toString();
         if (keySchema != null) {
             id = stringify(keySchema, key);
         }
@@ -133,9 +159,9 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         }
 
         // if id==null, extract the id from the JSON, AVRO or PROTOBUF value
-        if (id == null
-                && doc != null
-                && elasticSearchConfig.getPrimaryFields() != null
+        if (doc != null
+                && elasticSearchConfig.keyIgnore == true
+                && !Strings.nullToEmpty(elasticSearchConfig.getPrimaryFields())
                 && (SchemaType.JSON.equals(valueSchema.getSchemaInfo().getType())
                 || SchemaType.AVRO.equals(valueSchema.getSchemaInfo().getType())
                 || SchemaType.PROTOBUF.equals(valueSchema.getSchemaInfo().getType()))) {

@@ -78,7 +78,6 @@ import org.apache.pulsar.tests.integration.io.CassandraSinkTester;
 import org.apache.pulsar.tests.integration.io.DebeziumMongoDbSourceTester;
 import org.apache.pulsar.tests.integration.io.DebeziumMySqlSourceTester;
 import org.apache.pulsar.tests.integration.io.DebeziumPostgreSqlSourceTester;
-import org.apache.pulsar.tests.integration.io.ElasticSearchSinkTester;
 import org.apache.pulsar.tests.integration.io.HdfsSinkTester;
 import org.apache.pulsar.tests.integration.io.JdbcPostgresSinkTester;
 import org.apache.pulsar.tests.integration.io.JdbcPostgresSinkTester.Foo;
@@ -144,7 +143,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
     @Test(enabled = false, groups = "sink")
     public void testElasticSearchSink() throws Exception {
-        testSink(new ElasticSearchSinkTester(), true);
+        testSink(new ElasticSearchSinkKeyValueTester(), true);
     }
 
     @Test(groups = "sink")
