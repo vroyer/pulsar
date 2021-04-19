@@ -49,6 +49,7 @@ import org.apache.pulsar.common.api.proto.PulsarApi;
 import org.apache.pulsar.common.api.proto.PulsarApi.KeyValue;
 import org.apache.pulsar.common.api.proto.PulsarApi.MessageMetadata;
 import org.apache.pulsar.common.schema.KeyValueEncodingType;
+import org.apache.pulsar.common.schema.SchemaInfo;
 import org.apache.pulsar.common.schema.SchemaType;
 
 public class MessageImpl<T> implements Message<T> {
@@ -279,10 +280,18 @@ public class MessageImpl<T> implements Message<T> {
         }
     }
 
+    private SchemaInfo getSchemaInfo() {
+        if (schema instanceof AutoConsumeSchema) {
+            ((AutoConsumeSchema) schema).fetchSchemaIfNeeded();
+        }
+        return schema.getSchemaInfo();
+    }
+
     @Override
     public T getValue() {
         checkNotNull(msgMetadataBuilder);
-        if (schema.getSchemaInfo() != null && SchemaType.KEY_VALUE == schema.getSchemaInfo().getType()) {
+        SchemaInfo schemaInfo = getSchemaInfo();
+        if (schemaInfo != null && SchemaType.KEY_VALUE == schemaInfo.getType()) {
             if (schema.supportSchemaVersioning()) {
                 return getKeyValueBySchemaVersion();
             } else {

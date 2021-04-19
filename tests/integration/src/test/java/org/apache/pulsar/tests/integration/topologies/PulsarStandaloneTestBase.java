@@ -21,6 +21,7 @@ package org.apache.pulsar.tests.integration.topologies;
 import static org.testng.Assert.assertEquals;
 
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.io.IOUtils;
 import org.apache.pulsar.tests.integration.containers.StandaloneContainer;
 import org.apache.pulsar.tests.integration.docker.ContainerExecResult;
 import org.testcontainers.containers.Network;
@@ -88,6 +89,20 @@ public abstract class PulsarStandaloneTestBase extends PulsarTestBase {
     protected void stopCluster() throws Exception {
         container.stop();
         network.close();
+    }
+
+
+
+    protected void dumpFunctionLogs(String name) {
+        try {
+            String logFile = "/pulsar/logs/functions/public/default/" + name + "/" + name + "-0.log";
+            String logs = container.<String>copyFileFromContainer(logFile, (inputStream) -> {
+                return IOUtils.toString(inputStream, "utf-8");
+            });
+            log.info("Function {} logs {}", name, logs);
+        } catch (Throwable err) {
+            log.info("Cannot download {} logs", name, err);
+        }
     }
 
 }

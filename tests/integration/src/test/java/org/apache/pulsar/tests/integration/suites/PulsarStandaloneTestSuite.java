@@ -40,4 +40,5 @@ public class PulsarStandaloneTestSuite extends PulsarStandaloneTestBase implemen
     public String getTestName() {
         return "pulsar-standalone-suite";
     }
+
 }
