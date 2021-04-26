@@ -1,5 +1,5 @@
 ---
-id: version-2.6.2-security-tls-keystore
+id: version-2.7.2-security-tls-keystore
 title: Using TLS with KeyStore configure
 sidebar_label: Using TLS with KeyStore configure
 original_id: security-tls-keystore
@@ -222,7 +222,7 @@ brokerClientTlsTrustStore=/var/private/tls/client.truststore.jks
 brokerClientTlsTrustStorePassword=clientpw
 # internal auth config
 brokerClientAuthenticationPlugin=org.apache.pulsar.client.impl.auth.AuthenticationKeyStoreTls
-brokerClientAuthenticationParameters=keyStoreType:JKS,keyStorePath:/var/private/tls/client.keystore.jks,keyStorePassword:clientpw
+brokerClientAuthenticationParameters={"keyStoreType":"JKS","keyStorePath":"/var/private/tls/client.keystore.jks","keyStorePassword":"clientpw"}
 # currently websocket not support keystore type
 webSocketServiceEnabled=false
 ```
@@ -242,7 +242,7 @@ e.g.
     tlsTrustStorePath=/var/private/tls/client.truststore.jks
     tlsTrustStorePassword=clientpw
     authPlugin=org.apache.pulsar.client.impl.auth.AuthenticationKeyStoreTls
-    authParams=keyStoreType:JKS,keyStorePath:/var/private/tls/client.keystore.jks,keyStorePassword:clientpw
+    authParams={"keyStoreType":"JKS","keyStorePath":"/path/to/keystorefile","keyStorePassword":"keystorepw"}
     ```
 
 1. for java client
