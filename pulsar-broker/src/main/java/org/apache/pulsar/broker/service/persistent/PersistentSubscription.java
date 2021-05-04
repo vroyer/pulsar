@@ -1101,7 +1101,7 @@ public class PersistentSubscription implements Subscription {
     }
 
     public boolean checkAndUnblockIfStuck() {
-        return dispatcher.checkAndUnblockIfStuck();
+        return dispatcher != null ? dispatcher.checkAndUnblockIfStuck() : false;
     }
 
     private static final Logger log = LoggerFactory.getLogger(PersistentSubscription.class);
