@@ -925,6 +925,17 @@ public abstract class ConsumerBase<T> extends HandlerState implements Consumer<T
         return INCOMING_MESSAGES_SIZE_UPDATER.get(this);
     }
 
+    public int getTotalIncomingMessages() {
+        return incomingMessages.size();
+    }
+
+    protected void clearIncomingMessages() {
+        // release messages if they are pooled messages
+        incomingMessages.forEach(Message::release);
+        incomingMessages.clear();
+        resetIncomingMessageSize();
+    }
+
     protected abstract void completeOpBatchReceive(OpBatchReceive<T> op);
 
     private static final Logger log = LoggerFactory.getLogger(ConsumerBase.class);
