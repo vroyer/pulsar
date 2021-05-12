@@ -23,6 +23,7 @@ import static org.apache.pulsar.schema.compatibility.SchemaCompatibilityCheckTes
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertFalse;
 import static org.testng.Assert.assertNotNull;
+import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
 import static org.testng.Assert.fail;
 import static org.testng.internal.junit.ArrayAsserts.assertArrayEquals;
@@ -154,10 +155,6 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
                 .subscribe();
 
         producer.send(personTwo);
-
-        Schemas.PersonTwo personConsume = consumer.receive().getValue();
-        assertEquals("Tom", personConsume.getName());
-        assertEquals(1, personConsume.getId());
 
         Message<Schemas.PersonTwo> message = consumer.receive();
         Schemas.PersonTwo personConsume = message.getValue();

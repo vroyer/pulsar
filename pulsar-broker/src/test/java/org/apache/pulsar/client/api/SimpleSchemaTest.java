@@ -21,6 +21,7 @@ package org.apache.pulsar.client.api;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.Cleanup;
 import lombok.NoArgsConstructor;
 
 import static java.nio.charset.StandardCharsets.UTF_8;

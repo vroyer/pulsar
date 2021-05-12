@@ -268,14 +268,6 @@ public class MessageImpl<T> implements Message<T> {
         }
     }
 
-    @Override
-    public int size() {
-        if (msgMetadata.isNullValue()) {
-            return 0;
-        }
-        return payload.readableBytes();
-    }
-
     public Schema<T> getSchemaInternal() {
         return this.schema;
     }
@@ -470,7 +462,8 @@ public class MessageImpl<T> implements Message<T> {
 
     @Override
     public byte[] getKeyBytes() {
-        if (!msgMetadata.hasPartitionKey() || msgMetadata.isNullPartitionKey()) {
+        checkNotNull(msgMetadataBuilder);
+        if (!msgMetadataBuilder.hasPartitionKey() || msgMetadataBuilder.getPartitionKey() == null) {
             return null;
         } else if (hasBase64EncodedKey()) {
             return Base64.getDecoder().decode(getKey());

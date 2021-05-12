@@ -21,15 +21,22 @@ package org.apache.pulsar.client.impl.schema.generic;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.testng.annotations.Test;
-
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import java.util.Collections;
 
 import static java.nio.charset.StandardCharsets.UTF_8;
+import org.apache.pulsar.common.util.ObjectMapperFactory;
+import org.apache.pulsar.common.schema.SchemaType;
 import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.client.api.schema.GenericSchema;
+import org.apache.pulsar.client.api.schema.SchemaDefinition;
+import org.apache.pulsar.client.impl.schema.JSONSchema;
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertNull;
 import static org.testng.Assert.assertTrue;
-
+import static org.testng.AssertJUnit.assertSame;
 
 public class GenericJsonRecordTest {
 
@@ -93,7 +100,7 @@ public class GenericJsonRecordTest {
     }
 
     @Test
-    public void testEncodeAndDecodeObject() throws JsonProcessingException {
+    public void testEncodeAndDecodeObject() throws Exception {
         // test case from issue https://github.com/apache/pulsar/issues/9605
         JSONSchema<PC> jsonSchema = JSONSchema.of(SchemaDefinition.<PC>builder().withPojo(PC.class).build());
         GenericSchema genericJsonSchema = GenericJsonSchema.of(jsonSchema.getSchemaInfo());

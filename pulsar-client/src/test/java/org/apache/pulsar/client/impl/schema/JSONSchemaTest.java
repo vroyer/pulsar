@@ -26,10 +26,11 @@ import static org.apache.pulsar.client.impl.schema.SchemaTestUtils.SCHEMA_JSON_N
 import static org.testng.Assert.assertEquals;
 import static org.testng.Assert.assertTrue;
 import static org.testng.AssertJUnit.assertSame;
-
-import com.fasterxml.jackson.core.JsonProcessingException;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.ByteBufAllocator;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.avro.Schema;
 import org.apache.avro.SchemaValidationException;
@@ -372,7 +373,7 @@ public class JSONSchemaTest {
     }
 
     @Test
-    public void testEncodeAndDecodeObject() throws JsonProcessingException {
+    public void testEncodeAndDecodeObject() throws Exception {
         JSONSchema<PC> jsonSchema = JSONSchema.of(SchemaDefinition.<PC>builder().withPojo(PC.class).build());
         PC pc = new PC("dell", "alienware", 2021, GPU.AMD,
                 new Seller("WA", "street", 98004));

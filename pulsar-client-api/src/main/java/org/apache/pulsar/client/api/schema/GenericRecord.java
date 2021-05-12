@@ -21,6 +21,7 @@ package org.apache.pulsar.client.api.schema;
 import java.util.List;
 import org.apache.pulsar.common.classification.InterfaceAudience;
 import org.apache.pulsar.common.classification.InterfaceStability;
+import org.apache.pulsar.common.schema.SchemaType;
 
 /**
  * An interface represents a message with schema.

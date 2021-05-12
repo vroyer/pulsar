@@ -21,6 +21,7 @@ package org.apache.pulsar.client.impl.schema.generic;
 import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import org.apache.pulsar.client.api.schema.Field;
+import org.apache.pulsar.common.schema.SchemaType;
 
 import java.util.List;
 
