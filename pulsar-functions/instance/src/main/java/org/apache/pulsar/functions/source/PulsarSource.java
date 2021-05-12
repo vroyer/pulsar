@@ -132,10 +132,10 @@ public class PulsarSource<T> extends PushSource<T> implements MessageListener<T>
         Schema<T> schema = null;
         if (message instanceof MessageImpl) {
             MessageImpl impl = (MessageImpl) message;
-            schema = impl.getSchema();
+            schema = impl.getSchemaInternal();
         } else if (message instanceof TopicMessageImpl) {
             TopicMessageImpl impl = (TopicMessageImpl) message;
-            schema = impl.getSchema();
+            schema = impl.getSchemaInternal();
         }
         Record<T> record = PulsarRecord.<T>builder()
                 .message(message)

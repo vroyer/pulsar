@@ -40,7 +40,6 @@ import lombok.extern.slf4j.Slf4j;
 
 import org.apache.pulsar.client.api.Consumer;
 import org.apache.pulsar.client.api.ConsumerBuilder;
-import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.SubscriptionInitialPosition;
@@ -286,9 +285,9 @@ public class PulsarSourceTest {
         Consumer consumer = mock(Consumer.class);
         MessageImpl messageImpl = mock(MessageImpl.class);
         Schema schema = mock(Schema.class);
-        when(messageImpl.getSchema()).thenReturn(schema);
+        when(messageImpl.getSchemaInternal()).thenReturn(schema);
         pulsarSource.received(consumer, (Message) messageImpl);
-        verify(messageImpl.getSchema(), times(1));
+        verify(messageImpl.getSchemaInternal(), times(1));
         Record<GenericRecord> pushed = pulsarSource.read();
         assertSame(pushed.getSchema(), schema);
     }
