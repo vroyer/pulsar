@@ -321,9 +321,10 @@ The Apache Software License, Version 2.0
      - com.fasterxml.jackson.module-jackson-module-jaxb-annotations-2.11.1.jar
      - com.fasterxml.jackson.module-jackson-module-jsonSchema-2.11.1.jar
  * Caffeine -- com.github.ben-manes.caffeine-caffeine-2.6.2.jar
- * Proto Google Common Protos -- com.google.api.grpc-proto-google-common-protos-1.12.0.jar
  * Joda -- org.joda-joda-convert-2.2.1.jar
- * Bitbucket -- org.bitbucket.b_c-jose4j-0.7.2.jar
+ * Conscrypt -- org.conscrypt-conscrypt-openjdk-uber-2.5.2.jar
+ * Proto Google Common Protos -- com.google.api.grpc-proto-google-common-protos-1.17.0.jar
+ * Bitbucket -- org.bitbucket.b_c-jose4j-0.7.6.jar
  * Gson
     - com.google.code.gson-gson-2.8.6.jar
     - io.gsonfire-gson-fire-1.8.4.jar
@@ -447,6 +448,8 @@ The Apache Software License, Version 2.0
     - org.eclipse.jetty.websocket-websocket-common-9.4.39.v20210325.jar
     - org.eclipse.jetty.websocket-websocket-server-9.4.39.v20210325.jar
     - org.eclipse.jetty.websocket-websocket-servlet-9.4.39.v20210325.jar
+    - org.eclipse.jetty-jetty-alpn-conscrypt-server-9.4.39.v20210325.jar
+    - org.eclipse.jetty-jetty-alpn-server-9.4.39.v20210325.jar
  * SnakeYaml -- org.yaml-snakeyaml-1.26.jar
  * RocksDB - org.rocksdb-rocksdbjni-6.10.2.jar
  * Google Error Prone Annotations - com.google.errorprone-error_prone_annotations-2.3.4.jar

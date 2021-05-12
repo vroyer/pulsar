@@ -40,6 +40,7 @@ import javax.net.ssl.SSLException;
 import javax.net.ssl.TrustManagerFactory;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.pulsar.common.util.SecurityUtility;
 import org.eclipse.jetty.util.ssl.SslContextFactory;
 
 /**
@@ -152,7 +153,9 @@ public class KeyStoreSSLContext {
         if (this.allowInsecureConnection) {
             trustManagerFactory = InsecureTrustManagerFactory.INSTANCE;
         } else {
-            trustManagerFactory = TrustManagerFactory.getInstance(tmfAlgorithm);
+            trustManagerFactory = sslProviderString != null
+                    ? TrustManagerFactory.getInstance(tmfAlgorithm, sslProviderString)
+                    : TrustManagerFactory.getInstance(tmfAlgorithm);
             KeyStore trustStore = KeyStore.getInstance(trustStoreTypeString);
             char[] passwordChars = trustStorePassword.toCharArray();
             trustStore.load(new FileInputStream(trustStorePath), passwordChars);
@@ -160,7 +163,9 @@ public class KeyStoreSSLContext {
         }
 
         // init
-        sslContext.init(keyManagers, trustManagerFactory.getTrustManagers(), new SecureRandom());
+        sslContext.init(keyManagers, SecurityUtility
+                        .processConscryptTrustManagers(trustManagerFactory.getTrustManagers()),
+                new SecureRandom());
         this.sslContext = sslContext;
         return sslContext;
     }
@@ -335,6 +340,13 @@ public class KeyStoreSSLContext {
                                                             long certRefreshInSec)
             throws GeneralSecurityException, SSLException, FileNotFoundException, IOException {
         SslContextFactory sslCtxFactory;
+
+        if (sslProviderString == null) {
+            Provider provider = SecurityUtility.CONSCRYPT_PROVIDER;
+            if (provider != null) {
+                sslProviderString = provider.getName();
+            }
+        }
 
         sslCtxFactory = new SslContextFactoryWithAutoRefresh(
                 sslProviderString,
