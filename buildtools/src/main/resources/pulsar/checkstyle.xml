@@ -36,7 +36,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
     <module name="LineLength">
         <!-- Checks if a line is too long. -->
-        <property name="max" value="120"/>
+        <property name="max" value="200"/>
         <property name="severity" value="error"/>
 
         <!--
@@ -86,8 +86,9 @@ page at http://checkstyle.sourceforge.net/config.html -->
         <property name="file" value="${checkstyle.suppressions.file}" default="suppressions.xml" />
     </module>
 
-    <!-- Check that every module has a package-info.java -->
+    <!-- Check that every module has a package-info.java 
     <module name="JavadocPackage"/>
+    -->
 
     <!-- All Java AST specific tests live under TreeWalker module. -->
     <module name="TreeWalker">
@@ -154,12 +155,14 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="message" value="Static import functions from Guava Preconditions"/>
         </module>
 
+	<!-- This rules makes harder cherry picks 
         <module name="UnusedImports">
             <property name="severity" value="error"/>
             <property name="processJavadoc" value="true"/>
             <message key="import.unused"
                      value="Unused import: {0}."/>
         </module>
+        -->
 
         <!--
 
@@ -185,11 +188,12 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="allowMissingParamTags" value="true"/>
         </module>
 
+	<!-- Disabled rules, in order to ease cherry picks
         <module name="JavadocStyle">
             <property name="severity" value="error"/>
             <property name="checkHtml" value="true"/>
         </module>
-
+        -->
         <!--
 
         NAMING CHECKS
@@ -252,13 +256,15 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="severity" value="error"/>
         </module>
 
+
+	<!--
         <module name="MethodNameCheck">
-            <!-- Validates identifiers for method names. -->
             <metadata name="altname" value="MethodName"/>
             <property name="format" value="(^[a-z][a-zA-Z0-9]*(_[a-zA-Z0-9]+)*$|Void)"/>
             <property name="severity" value="error"/>
         </module>
-
+        -->
+        
         <module name="ParameterName">
             <!-- Validates identifiers for method parameters against the
               expression "^[a-z][a-zA-Z0-9]*$". -->
@@ -355,11 +361,8 @@ page at http://checkstyle.sourceforge.net/config.html -->
 
         -->
 
+        <!-- disabled rule, in order to ease cherry picks 
         <module name="WhitespaceAround">
-            <!-- Checks that various tokens are surrounded by whitespace.
-                 This includes most binary operators and keywords followed
-                 by regular or curly braces.
-            -->
             <property name="tokens" value="ASSIGN, BAND, BAND_ASSIGN, BOR,
         BOR_ASSIGN, BSR, BSR_ASSIGN, BXOR, BXOR_ASSIGN, COLON, DIV, DIV_ASSIGN,
         EQUAL, GE, GT, LAND, LE, LITERAL_CATCH, LITERAL_DO, LITERAL_ELSE,
@@ -369,6 +372,7 @@ page at http://checkstyle.sourceforge.net/config.html -->
         SL, SL_ASSIGN, SR_ASSIGN, STAR, STAR_ASSIGN"/>
             <property name="severity" value="error"/>
         </module>
+        -->
 
         <module name="WhitespaceAfter">
             <!-- Checks that commas, semicolons and typecasts are followed by
@@ -396,15 +400,15 @@ page at http://checkstyle.sourceforge.net/config.html -->
             <property name="severity" value="error"/>
         </module>
 
+
+	<!-- disabled rule 
         <module name="OperatorWrap">
-            <!-- Checks that operators like + and ? appear at newlines rather than
-                 at the end of the previous line.
-            -->
             <property name="option" value="NL"/>
             <property name="tokens" value="BAND, BOR, BSR, BXOR, DIV, EQUAL,
         GE, GT, LAND, LE, LITERAL_INSTANCEOF, LOR, LT, MINUS, MOD,
         NOT_EQUAL, PLUS, QUESTION, SL, SR, STAR "/>
         </module>
+        -->
 
         <module name="OperatorWrap">
             <!-- Checks that assignment operators are at the end of the line. -->
