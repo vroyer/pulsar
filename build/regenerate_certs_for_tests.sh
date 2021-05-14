@@ -45,13 +45,6 @@ reissue_certificate $ROOT_DIR/pulsar-proxy/src/test/resources/authentication/tls
   $ROOT_DIR/pulsar-proxy/src/test/resources/authentication/tls/server-cert.pem
 
 generate_ca
-cp ca-cert.pem $ROOT_DIR/pulsar-broker/src/test/resources/authentication/tls/cacert.pem
-reissue_certificate $ROOT_DIR/pulsar-broker/src/test/resources/authentication/tls/broker-key.pem \
-  $ROOT_DIR/pulsar-broker/src/test/resources/authentication/tls/broker-cert.pem
-reissue_certificate $ROOT_DIR/pulsar-broker/src/test/resources/authentication/tls/client-key.pem \
-  $ROOT_DIR/pulsar-broker/src/test/resources/authentication/tls/client-cert.pem
-
-generate_ca
 cp ca-cert.pem $ROOT_DIR/bouncy-castle/bcfips-include-test/src/test/resources/authentication/tls/cacert.pem
 reissue_certificate $ROOT_DIR/bouncy-castle/bcfips-include-test/src/test/resources/authentication/tls/broker-key.pem \
   $ROOT_DIR/bouncy-castle/bcfips-include-test/src/test/resources/authentication/tls/broker-cert.pem
