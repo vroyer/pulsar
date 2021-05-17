@@ -66,7 +66,7 @@ public class TransactionCoordinatorClientTest extends TransactionMetaStoreTestBa
         }
     }
 
-    @Test
+    @Test(enabled=false)
     public void testClientStart() throws PulsarClientException, TransactionCoordinatorClientException, InterruptedException {
         try {
             transactionCoordinatorClient.start();
@@ -79,14 +79,14 @@ public class TransactionCoordinatorClientTest extends TransactionMetaStoreTestBa
         Assert.assertEquals(transactionCoordinatorClient.getState(), State.READY);
     }
 
-    @Test
+    @Test(enabled=false)
     public void testNewTxn() throws TransactionCoordinatorClientException {
         TxnID txnID = transactionCoordinatorClient.newTransaction();
         Assert.assertNotNull(txnID);
         Assert.assertEquals(txnID.getLeastSigBits(), 0L);
     }
 
-    @Test
+    @Test(enabled=false)
     public void testCommitAndAbort() throws TransactionCoordinatorClientException {
         TxnID txnID = transactionCoordinatorClient.newTransaction();
         transactionCoordinatorClient.addPublishPartitionToTxn(txnID, Lists.newArrayList("persistent://public/default/testCommitAndAbort"));
