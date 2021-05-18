@@ -523,8 +523,9 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
             assertArrayEquals("foo".getBytes(StandardCharsets.UTF_8), message.getKeyBytes());
             assertArrayEquals("foo".getBytes(StandardCharsets.UTF_8), message2.getKeyBytes());
         } else {
-            assertNull(message.getKey());
-            assertNull(message2.getKey());
+            // https://github.com/apache/pulsar/issues/10625
+            assertEquals("", message.getKey());
+            assertEquals("", message2.getKey());
         }
 
         producer.close();
@@ -534,12 +535,12 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
 
     @Test
     public void testKeyValueSchemaWithStructsINLINE() throws Exception {
-        testKeyValueSchema(KeyValueEncodingType.INLINE);
+        testKeyValueSchemaWithStructs(KeyValueEncodingType.INLINE);
     }
 
     @Test
     public void testKeyValueSchemaWithStructsSEPARATED() throws Exception {
-        testKeyValueSchema(KeyValueEncodingType.SEPARATED);
+        testKeyValueSchemaWithStructs(KeyValueEncodingType.SEPARATED);
     }
 
     private void testKeyValueSchemaWithStructs(KeyValueEncodingType keyValueEncodingType) throws Exception {
@@ -580,7 +581,12 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
 
         Message<KeyValue<Schemas.PersonOne, Schemas.PersonTwo>> message = consumer.receive();
         Message<GenericRecord> message2 = consumer2.receive();
-        assertEquals(message.getValue(), message2.getValue().getNativeObject());
+        log.info("message: {}", message.getValue(), message.getValue().getClass());
+        log.info("message2: {}", message2.getValue().getNativeObject(), message2.getValue().getNativeObject().getClass());
+        KeyValue<GenericRecord, GenericRecord> keyValue2 = (KeyValue<GenericRecord, GenericRecord>) message2.getValue().getNativeObject();
+        assertEquals(message.getValue().getKey().id, keyValue2.getKey().getField("id"));
+        assertEquals(message.getValue().getValue().id, keyValue2.getValue().getField("id"));
+        assertEquals(message.getValue().getValue().name, keyValue2.getValue().getField("name"));
 
         Schema<?> schema = message.getReaderSchema().get();
         Schema<?> schemaFromGenericRecord = message.getReaderSchema().get();
@@ -593,8 +599,9 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
             assertNotNull(message.getKeyBytes());
             assertNotNull(message2.getKeyBytes());
         } else {
-            assertNull(message.getKey());
-            assertNull(message2.getKey());
+            // https://github.com/apache/pulsar/issues/10625
+            assertEquals("", message.getKey());
+            assertEquals("", message2.getKey());
         }
 
         producer.close();
@@ -669,5 +676,42 @@ public class SchemaTest extends MockedPulsarServiceBaseTest {
             } catch (BKException.BKNoSuchLedgerExistsException ignore) {
             }
         }
+    }
+
+
+    @Test
+    public void testNullKey() throws Exception {
+        final String tenant = PUBLIC_TENANT;
+        final String namespace = "test-namespace-" + randomName(16);
+        final String topicName = "test-kv-schema-" + randomName(16);
+
+        final String topic = TopicName.get(
+                TopicDomain.persistent.value(),
+                tenant,
+                namespace,
+                topicName).toString();
+
+        admin.namespaces().createNamespace(
+                tenant + "/" + namespace,
+                Sets.newHashSet(CLUSTER_NAME));
+
+        admin.topics().createPartitionedTopic(topic, 2);
+
+        Producer<String> producer = pulsarClient
+                .newProducer(Schema.STRING)
+                .topic(topic)
+                .create();
+
+        Consumer<String> consumer = pulsarClient.newConsumer(Schema.STRING)
+                .subscriptionName("test-sub")
+                .topic(topic)
+                .subscribe();
+
+        producer.send("foo");
+
+        Message<String> message = consumer.receive();
+        // https://github.com/apache/pulsar/issues/10625
+        assertEquals("", message.getKey());
+        assertEquals("foo", message.getValue());
     }
 }
