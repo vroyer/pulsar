@@ -89,7 +89,7 @@ public class PulsarAdminException extends Exception {
     }
 
     public PulsarAdminException(ServerErrorException e, String message) {
-        super(message, e);
+        super(getReasonFromServer(e) + (message != null ? " " + message : ""), e);
         this.httpError = getReasonFromServer(e);
         this.statusCode = e.getResponse().getStatus();
     }
