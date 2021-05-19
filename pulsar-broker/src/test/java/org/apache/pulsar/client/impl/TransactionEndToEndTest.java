@@ -65,6 +65,7 @@ import org.apache.pulsar.common.policies.data.PersistentTopicInternalStats;
 import org.apache.pulsar.common.policies.data.TenantInfo;
 import org.apache.pulsar.common.util.collections.ConcurrentOpenHashMap;
 import org.testng.Assert;
+import org.testng.SkipException;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
@@ -85,6 +86,9 @@ public class TransactionEndToEndTest extends TransactionTestBase {
 
     @BeforeMethod
     protected void setup() throws Exception {
+        if (1==1) {
+            throw new SkipException("transaction tests skipped");
+        }
         internalSetup();
 
         String[] brokerServiceUrlArr = getPulsarServiceList().get(0).getBrokerServiceUrl().split(":");
