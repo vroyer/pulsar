@@ -29,7 +29,7 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicIntegerFieldUpdater;
-
+import java.util.concurrent.atomic.LongAdder;
 import org.apache.bookkeeper.mledger.AsyncCallbacks;
 import org.apache.bookkeeper.mledger.AsyncCallbacks.ClearBacklogCallback;
 import org.apache.bookkeeper.mledger.AsyncCallbacks.DeleteCallback;
@@ -110,6 +110,9 @@ public class PersistentSubscription implements Subscription {
     private volatile Position lastMarkDeleteForTransactionMarker;
     private volatile boolean isDeleteTransactionMarkerInProcess = false;
     private final PendingAckHandle pendingAckHandle;
+
+    private final LongAdder bytesOutFromRemovedConsumers = new LongAdder();
+    private final LongAdder msgOutFromRemovedConsumer = new LongAdder();
 
     static {
         REPLICATED_SUBSCRIPTION_CURSOR_PROPERTIES.put(REPLICATED_SUBSCRIPTION_PROPERTY, 1L);
@@ -255,7 +258,13 @@ public class PersistentSubscription implements Subscription {
         if (dispatcher != null) {
             dispatcher.removeConsumer(consumer);
         }
-        if (dispatcher.getConsumers().isEmpty()) {
+
+        // preserve accumulative stats form removed consumer
+        ConsumerStats stats = consumer.getStats();
+        bytesOutFromRemovedConsumers.add(stats.bytesOutCounter);
+        msgOutFromRemovedConsumer.add(stats.msgOutCounter);
+
+        if (dispatcher != null && dispatcher.getConsumers().isEmpty()) {
             deactivateCursor();
 
             if (!cursor.isDurable()) {
@@ -925,6 +934,8 @@ public class PersistentSubscription implements Subscription {
         subStats.lastExpireTimestamp = lastExpireTimestamp;
         subStats.lastConsumedFlowTimestamp = lastConsumedFlowTimestamp;
         subStats.lastMarkDeleteAdvancedTimestamp = lastMarkDeleteAdvancedTimestamp;
+        subStats.bytesOutCounter = bytesOutFromRemovedConsumers.longValue();
+        subStats.msgOutCounter = msgOutFromRemovedConsumer.longValue();
         Dispatcher dispatcher = this.dispatcher;
         if (dispatcher != null) {
             Map<String, List<String>> consumerKeyHashRanges = getType() == SubType.Key_Shared?
