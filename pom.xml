@@ -86,6 +86,7 @@ flexible messaging model and an intuitive client API.</description>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
     <redirectTestOutputToFile>true</redirectTestOutputToFile>
+    <test.additional.args></test.additional.args>
     <testReuseFork>true</testReuseFork>
     <testForkCount>4</testForkCount>
     <testRealAWS>false</testRealAWS>
@@ -143,8 +144,7 @@ flexible messaging model and an intuitive client API.</description>
     <postgresql-jdbc.version>42.2.12</postgresql-jdbc.version>
     <clickhouse-jdbc.version>0.2.4</clickhouse-jdbc.version>
     <mariadb-jdbc.version>2.6.0</mariadb-jdbc.version>
-    <hdfs-offload-version3>3.2.0</hdfs-offload-version3>
-    <org.eclipse.jetty-hdfs-offload>9.3.24.v20180605</org.eclipse.jetty-hdfs-offload>
+    <hdfs-offload-version3>3.3.0</hdfs-offload-version3>
     <elasticsearch.version>7.9.1</elasticsearch.version>
     <presto.version>334</presto.version>
     <flink.version>1.6.0</flink.version>
