@@ -168,7 +168,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
         testDebeziumPostgreSqlConnect("org.apache.kafka.connect.json.JsonConverter", true);
     }
 
-    @Test(groups = "source")
+    @Test(groups = "source", enabled = false)
     public void testDebeziumMongoDbSource() throws Exception{
         testDebeziumMongoDbConnect("org.apache.kafka.connect.json.JsonConverter", true);
     }
@@ -2529,7 +2529,6 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
     }
 
     private  void testDebeziumMongoDbConnect(String converterClassName, boolean jsonWithEnvelope) throws Exception {
-
         final String tenant = TopicName.PUBLIC_TENANT;
         final String namespace = TopicName.DEFAULT_NAMESPACE;
         final String outputTopicName = "debe-output-topic-name";
