@@ -391,7 +391,6 @@ public class LookupProxyHandler {
             // Connected to backend broker
             long requestId = proxyConnection.newRequestId();
             ByteBuf command;
-
             command = Commands.newGetSchema(requestId, topic, schemaVersion);
 
             clientCnx.sendGetRawSchema(command, requestId).whenComplete((r, t) -> {
