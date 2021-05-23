@@ -125,7 +125,7 @@ public class TypedMessageBuilderImpl<T> implements TypedMessageBuilder<T> {
 
     @Override
     public TypedMessageBuilder<T> keyBytes(byte[] key) {
-        if (schema.getSchemaInfo().getType() == SchemaType.KEY_VALUE) {
+        if (schema instanceof KeyValueSchema && schema.getSchemaInfo().getType() == SchemaType.KEY_VALUE) {
             KeyValueSchema kvSchema = (KeyValueSchema) schema;
             checkArgument(!(kvSchema.getKeyValueEncodingType() == KeyValueEncodingType.SEPARATED),
                     "This method is not allowed to set keys when in encoding type is SEPARATED");
@@ -151,7 +151,8 @@ public class TypedMessageBuilderImpl<T> implements TypedMessageBuilder<T> {
             msgMetadataBuilder.setNullValue(true);
             return this;
         }
-        if (schema.getSchemaInfo() != null && schema.getSchemaInfo().getType() == SchemaType.KEY_VALUE) {
+        if (value instanceof org.apache.pulsar.common.schema.KeyValue
+                && schema.getSchemaInfo() != null && schema.getSchemaInfo().getType() == SchemaType.KEY_VALUE) {
             KeyValueSchema kvSchema = (KeyValueSchema) schema;
             org.apache.pulsar.common.schema.KeyValue kv = (org.apache.pulsar.common.schema.KeyValue) value;
             if (kvSchema.getKeyValueEncodingType() == KeyValueEncodingType.SEPARATED) {
