@@ -517,7 +517,11 @@ public class AdminTest extends MockedPulsarServiceBaseTest {
             properties.deleteTenant("my-tenant");
             fail("should have failed");
         } catch (RestException e) {
-            assertEquals(e.getResponse().getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+           // Currently in order to delete a tenant
+            // we check for the existance of namespaces
+            // if there is no namespace we return NOT_FOUND
+            //assertEquals(e.getResponse().getStatus(), Status.INTERNAL_SERVER_ERROR.getStatusCode());
+            assertEquals(e.getResponse().getStatus(), Status.NOT_FOUND.getStatusCode());
         }
 
         properties.createTenant("error-property", tenantInfo);
