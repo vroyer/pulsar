@@ -245,7 +245,8 @@ public class AdminApiTest2 extends MockedPulsarServiceBaseTest {
         consumer2.close();
     }
 
-    @Test
+    // this test is very much flaky, disabling it in LS272
+    @Test(enabled = false)
     public void testTopicPoliciesWithMultiBroker() throws Exception {
         //setup cluster with 3 broker
         cleanup();
