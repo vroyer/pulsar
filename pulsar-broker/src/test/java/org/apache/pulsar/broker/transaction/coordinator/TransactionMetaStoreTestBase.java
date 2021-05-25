@@ -31,6 +31,7 @@ import org.apache.pulsar.zookeeper.LocalBookkeeperEnsemble;
 import org.mockito.Mockito;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.testng.SkipException;
 import org.testng.annotations.AfterClass;
 
 public class TransactionMetaStoreTestBase {
@@ -47,6 +48,9 @@ public class TransactionMetaStoreTestBase {
     protected TransactionCoordinatorClient transactionCoordinatorClient;
 
     protected void setup() throws Exception {
+        if (1==1) {
+            throw new SkipException("transaction tests are disabled");
+        }
         log.info("---- Initializing SLAMonitoringTest -----");
         // Start local bookkeeper ensemble
         bkEnsemble = new LocalBookkeeperEnsemble(3, 0, () -> 0);
