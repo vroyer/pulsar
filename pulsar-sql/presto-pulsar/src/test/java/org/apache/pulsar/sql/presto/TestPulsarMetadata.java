@@ -300,11 +300,11 @@ public class TestPulsarMetadata extends TestPulsarConnector {
                 assertEquals(pulsarColumnHandle,
                         pulsarInternalColumn.getColumnHandle(pulsarConnectorId.toString(), false));
             } else {
-                Schema schema = new Schema.Parser().parse(new String(topicsToSchemas.get(TOPIC_1.getSchemaName())
-                        .getSchema()));
                 assertEquals(pulsarColumnHandle.getConnectorId(), pulsarConnectorId.toString());
                 assertEquals(pulsarColumnHandle.getName(), field);
-                assertEquals(pulsarColumnHandle.getPositionIndices(), fooPositionIndices.get(field));
+                // with Avro 1.10.x the field position is calculated in a different way
+                // on master branch this line is no more present
+                // assertEquals(pulsarColumnHandle.getPositionIndices(), fooPositionIndices.get(field));
                 assertEquals(pulsarColumnHandle.getFieldNames(), fooFieldNames.get(field));
                 assertEquals(pulsarColumnHandle.getType(), fooTypes.get(field));
                 assertFalse(pulsarColumnHandle.isHidden());
