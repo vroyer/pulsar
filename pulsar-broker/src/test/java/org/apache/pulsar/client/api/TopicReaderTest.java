@@ -49,6 +49,7 @@ import org.apache.pulsar.client.impl.TopicMessageIdImpl;
 import org.apache.pulsar.client.impl.TopicMessageImpl;
 import org.apache.pulsar.common.policies.data.TopicStats;
 import org.apache.pulsar.common.util.RelativeTimeUtil;
+import org.awaitility.Awaitility;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.testng.Assert;
@@ -924,7 +925,9 @@ public class TopicReaderTest extends ProducerConsumerBase {
             assertEquals(index, 101);
         }
 
-        assertFalse(reader.hasMessageAvailable());
+        Awaitility.await().untilAsserted(() ->
+            assertFalse(reader.hasMessageAvailable())
+        );
 
         reader.close();
         producer.close();
