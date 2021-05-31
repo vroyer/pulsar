@@ -146,7 +146,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
         testSink(new ElasticSearchSinkTester(), true);
     }
 
-    @Test(groups = "sink")
+    @Test(groups = "sink", enabled = false)
     public void testRabbitMQSink() throws Exception {
         final String containerName = "rabbitmq-" + randomName(8);
         testSink(new RabbitMQSinkTester(containerName), true, new RabbitMQSourceTester(containerName));
