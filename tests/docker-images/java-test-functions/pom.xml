@@ -81,7 +81,7 @@
                                 </transformer>
                             </transformers>
                             <artifactSet>
-                                <includes>pulsar-functions-api-examples</includes>
+                                <includes>org.apache.pulsar:pulsar-functions-api-examples</includes>
                             </artifactSet>
                             <filters>
                                 <filter>
