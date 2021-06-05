@@ -698,9 +698,12 @@ public class PersistentDispatcherMultipleConsumers extends AbstractDispatcherMul
             // abort read if no consumers are connected or if disconnect is initiated
             return 0;
         }
-        for(Consumer consumer : consumerList) {
-            if (isConsumerAvailable(consumer)) {
-                return consumer.getAvailablePermits();
+        for (Consumer consumer : consumerList) {
+            if (consumer != null && !consumer.isBlocked()) {
+                int availablePermits = consumer.getAvailablePermits();
+                if (availablePermits > 0) {
+                    return availablePermits;
+                }
             }
         }
         return 0;
