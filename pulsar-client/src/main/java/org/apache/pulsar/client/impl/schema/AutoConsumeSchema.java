@@ -155,6 +155,19 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
         }
     }
 
+    public Schema<GenericRecord> clone() {
+        AutoConsumeSchema schema = new AutoConsumeSchema();
+        schema.configureSchemaInfo(topicName, componentName, null);
+        if (schemaInfoProvider != null) {
+            schema.setSchemaInfoProvider(schemaInfoProvider);
+        }
+        for (Map.Entry<SchemaVersion, Schema<?>> entry : schemaMap.entrySet()) {
+            schema.setSchema(entry.getKey(), entry.getValue());
+        }
+        return schema;
+    }
+
+
     @Override
     public Optional<Object> getNativeSchema() {
         ensureSchemaInitialized(SchemaVersion.Latest);
@@ -231,18 +244,6 @@ public class AutoConsumeSchema implements Schema<GenericRecord> {
                 throw new IllegalArgumentException("Retrieve schema instance from schema info for type '"
                         + schemaInfo.getType() + "' is not supported yet");
         }
-    }
-
-    public Schema<GenericRecord> clone() {
-        AutoConsumeSchema schema = new AutoConsumeSchema();
-        schema.configureSchemaInfo(topicName, componentName, null);
-        if (schemaInfoProvider != null) {
-            schema.setSchemaInfoProvider(schemaInfoProvider);
-        }
-        for (Map.Entry<SchemaVersion, Schema<?>> entry : schemaMap.entrySet()) {
-            schema.setSchema(entry.getKey(), entry.getValue());
-        }
-        return schema;
     }
 
     @Override
