@@ -23,7 +23,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.pulsar.client.api.Schema;
 import org.apache.pulsar.client.api.schema.GenericRecord;
 import org.apache.pulsar.client.impl.MessageImpl;
-import org.apache.pulsar.common.api.proto.MessageMetadata;
+import org.apache.pulsar.common.api.proto.PulsarApi;
 import org.junit.Assert;
 import org.testng.annotations.Test;
 
@@ -38,7 +38,7 @@ public class AutoConsumeSchemaTest {
         Schema<GenericRecord> autoConsumeSchema = new AutoConsumeSchema();
         byte[] bytes = "bytes data".getBytes();
         MessageImpl<GenericRecord> message = MessageImpl.create(
-                new MessageMetadata(), ByteBuffer.wrap(bytes), autoConsumeSchema);
+                PulsarApi.MessageMetadata.newBuilder(), ByteBuffer.wrap(bytes), autoConsumeSchema);
         Assert.assertNull(message.getSchemaVersion());
         GenericRecord genericRecord = message.getValue();
         Assert.assertEquals(genericRecord.getNativeObject(), bytes);
