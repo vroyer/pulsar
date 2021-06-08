@@ -57,6 +57,9 @@ public class JsonConverter {
         if (schema.getLogicalType() != null && logicalTypeConverters.containsKey(schema.getLogicalType().getName())) {
             return logicalTypeConverters.get(schema.getLogicalType().getName()).toJson(schema, value);
         }
+        if (value == null) {
+            return jsonNodeFactory.nullNode();
+        }
         switch(schema.getType()) {
             case INT:
                 return jsonNodeFactory.numberNode((Integer) value);

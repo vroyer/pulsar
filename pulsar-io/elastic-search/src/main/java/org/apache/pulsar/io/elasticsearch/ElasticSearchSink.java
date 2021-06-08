@@ -138,18 +138,17 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         Object value = null;
         Schema<?> keySchema = null;
         Schema<?> valueSchema = null;
-
         if (record.getSchema() instanceof KeyValueSchema) {
             KeyValueSchema<GenericObject,GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
             keySchema = keyValueSchema.getKeySchema();
             valueSchema = keyValueSchema.getValueSchema();
-            KeyValue keyValue = (KeyValue) record.getValue().getNativeObject();
+            KeyValue<GenericObject, GenericObject> keyValue = (KeyValue<GenericObject, GenericObject>) record.getValue().getNativeObject();
             key = keyValue.getKey();
             value = keyValue.getValue();
         } else {
             key = record.getKey().orElse(null);
             valueSchema = record.getSchema();
-            value = record.getValue() == null ? null : record.getValue().getNativeObject();
+            value = record.getValue();
         }
 
         String id = null;
@@ -246,7 +245,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
         return objectMapper.writeValueAsString(jsonNode);
     }
 
-    public JsonNode extractJsonNode(Schema<?> schema, Object val) {
+    public static JsonNode extractJsonNode(Schema<?> schema, Object val) {
         switch (schema.getSchemaInfo().getType()) {
             case JSON:
                 return (JsonNode) ((GenericRecord) val).getNativeObject();
