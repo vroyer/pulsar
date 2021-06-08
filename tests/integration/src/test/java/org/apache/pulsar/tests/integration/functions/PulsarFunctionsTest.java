@@ -52,6 +52,7 @@ import org.apache.pulsar.functions.api.examples.AutoSchemaFunction;
 import org.apache.pulsar.functions.api.examples.AvroSchemaTestFunction;
 import org.apache.pulsar.functions.api.examples.pojo.AvroTestObject;
 import org.apache.pulsar.functions.api.examples.serde.CustomObject;
+import org.apache.pulsar.functions.instance.InstanceUtils;
 import org.apache.pulsar.tests.integration.containers.DebeziumMongoDbContainer;
 import org.apache.pulsar.tests.integration.containers.DebeziumMySQLContainer;
 import org.apache.pulsar.tests.integration.containers.DebeziumPostgreSqlContainer;
@@ -220,7 +221,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
         ensureSubscriptionCreated(
             inputTopicName,
-            String.format("public/default/%s", sinkName),
+                InstanceUtils.getDefaultSubscriptionName("public", "default", sinkName),
             tester.getInputTopicSchema());
 
         // submit the sink connector
@@ -1762,7 +1763,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
                 commands);
         assertTrue(result.getStdout().contains("\"Created successfully\""));
 
-        ensureSubscriptionCreated(inputTopicName, String.format("public/default/%s", functionName), inputTopicSchema);
+        ensureSubscriptionCreated(inputTopicName, InstanceUtils.getDefaultSubscriptionName("public", "default", functionName), inputTopicSchema);
     }
 
     private static void updateFunctionParallelism(String functionName, int parallelism) throws Exception {
@@ -1965,6 +1966,8 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
                     "stats",
                     topic);
             TopicStats topicStats = new Gson().fromJson(result.getStdout(), TopicStats.class);
+            log.info("topicStats {}", result.getStdout());
+            log.info("topicStats subs {}", topicStats.subscriptions);
             assertEquals(topicStats.subscriptions.size(), 0);
 
         } catch (ContainerExecException e) {
@@ -2731,7 +2734,7 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
                 commands);
         assertTrue(result.getStdout().contains("\"Created successfully\""));
 
-        ensureSubscriptionCreated(inputTopicName, String.format("public/default/%s", functionName), schema);
+        ensureSubscriptionCreated(inputTopicName, InstanceUtils.getDefaultSubscriptionName("public", "default", functionName), schema);
     }
 
     private static void publishAndConsumeMessages(String inputTopic,
