@@ -105,23 +105,17 @@ public class ElasticSearchClientTests {
     }
 
     @Test
-    public void testValidTopicName() {
+    public void testTopicToIndexName() {
         assertEquals(client.topicToIndexName("data-ks1.table1"),"data-ks1.table1");
-    }
+        assertEquals(client.topicToIndexName("persistent://public/default/testesjson"), "testesjson");
+        assertEquals(client.topicToIndexName("default/testesjson"), "testesjson");
+        assertEquals(client.topicToIndexName(".testesjson"), ".testesjson");
+        assertEquals(client.topicToIndexName("TEST"), "test");
 
-    @Test(expectedExceptions = RuntimeException.class)
-    public void testInvalidTopicName() {
-        client.topicToIndexName("_-+");
-    }
-
-    @Test(expectedExceptions = RuntimeException.class)
-    public void testInvalidTopicName2() {
-        client.topicToIndexName("_toto");
-    }
-
-    @Test(expectedExceptions = RuntimeException.class)
-    public void testInvalidTopicName3() {
-        client.topicToIndexName("toto\\titi");
+        assertThrows(RuntimeException.class, () -> client.topicToIndexName("toto\\titi"));
+        assertThrows(RuntimeException.class, () -> client.topicToIndexName("_abc"));
+        assertThrows(RuntimeException.class, () -> client.topicToIndexName("-abc"));
+        assertThrows(RuntimeException.class, () -> client.topicToIndexName("+abc"));
     }
 
     @Test

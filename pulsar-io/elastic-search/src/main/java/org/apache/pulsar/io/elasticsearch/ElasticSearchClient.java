@@ -395,6 +395,12 @@ public class ElasticSearchClient {
             // see elasticsearch limitations https://www.elastic.co/guide/en/elasticsearch/reference/current/indices-create-index.html#indices-create-api-path-params
             String indexName = topicName.toLowerCase(Locale.ROOT);
 
+            // remove the pulsar topic info persistent://tenant/namespace/topic
+            String[] parts = indexName.split("/");
+            if (parts.length > 1) {
+                indexName = parts[parts.length-1];
+            }
+
             // truncate to the max bytes length
             while (indexName.getBytes(StandardCharsets.UTF_8).length > 255) {
                 indexName = indexName.substring(0, indexName.length() - 1);
