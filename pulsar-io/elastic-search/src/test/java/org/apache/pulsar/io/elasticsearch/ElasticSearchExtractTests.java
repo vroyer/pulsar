@@ -119,6 +119,28 @@ public class ElasticSearchExtractTests {
         Pair<String, String> pair3 = elasticSearchSink3.extractIdAndDocument(genericObjectRecord);
         assertNull(pair3.getLeft());
         assertEquals(pair3.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
+
+        // default config with null PK + null value
+        ElasticSearchSink elasticSearchSink4 = new ElasticSearchSink();
+        elasticSearchSink4.open(ImmutableMap.of("elasticSearchUrl", "http://localhost:9200"), null);
+        Pair<String, String> pair4 = elasticSearchSink3.extractIdAndDocument(new Record<GenericObject>() {
+            @Override
+            public Optional<String> getTopicName() {
+                return Optional.of("data-ks1.table1");
+            }
+
+            @Override
+            public org.apache.pulsar.client.api.Schema  getSchema() {
+                return valueSchema;
+            }
+
+            @Override
+            public GenericObject getValue() {
+                return null;
+            }
+        });
+        assertNull(pair4.getLeft());
+        assertNull(pair4.getRight());
     }
 
     @Test
