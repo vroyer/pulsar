@@ -81,10 +81,12 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 if (idAndDoc.getRight() == null) {
                     switch (elasticSearchConfig.getNullValueAction()) {
                         case DELETE:
-                            if (elasticSearchConfig.isBulkEnabled()) {
-                                elasticsearchClient.bulkDelete(record, idAndDoc.getLeft());
-                            } else {
-                                elasticsearchClient.deleteDocument(record, idAndDoc.getLeft());
+                            if (idAndDoc.getLeft() != null) {
+                                if (elasticSearchConfig.isBulkEnabled()) {
+                                    elasticsearchClient.bulkDelete(record, idAndDoc.getLeft());
+                                } else {
+                                    elasticsearchClient.deleteDocument(record, idAndDoc.getLeft());
+                                }
                             }
                             break;
                         case IGNORE:
@@ -169,19 +171,14 @@ public class ElasticSearchSink implements Sink<GenericObject> {
             }
         }
 
-        if (elasticSearchConfig.isKeyIgnore()) {
-            if (doc == null || Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
-                // use the messageId as the doc id in last resort.
-                id = Hex.encodeHexString(record.getMessage().get().getMessageId().toByteArray());
-            } else {
-                try {
-                    // extract the PK from the JSON document
-                    JsonNode jsonNode = objectMapper.readTree(doc);
-                    List<String> pkFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
-                    id = stringifyKey(jsonNode, pkFields);
-                } catch (JsonProcessingException e) {
-                    log.error("Failed to read JSON", e);
-                }
+        if (elasticSearchConfig.isKeyIgnore() && !Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
+            try {
+                // extract the PK from the JSON document
+                JsonNode jsonNode = objectMapper.readTree(doc);
+                List<String> pkFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
+                id = stringifyKey(jsonNode, pkFields);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to read JSON", e);
             }
         }
 

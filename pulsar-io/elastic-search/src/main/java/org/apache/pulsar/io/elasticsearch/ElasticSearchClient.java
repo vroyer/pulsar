@@ -243,7 +243,8 @@ public class ElasticSearchClient {
             checkNotFailed();
             checkIndexExists(record.getTopicName());
             IndexRequest indexRequest = Requests.indexRequest(config.getIndexName());
-            indexRequest.id(idAndDoc.getLeft());
+            if (!Strings.isNullOrEmpty(idAndDoc.getLeft()))
+                indexRequest.id(idAndDoc.getLeft());
             indexRequest.type(config.getTypeName());
             indexRequest.source(idAndDoc.getRight(), XContentType.JSON);
 
@@ -268,7 +269,8 @@ public class ElasticSearchClient {
             checkNotFailed();
             checkIndexExists(record.getTopicName());
             IndexRequest indexRequest = Requests.indexRequest(config.getIndexName());
-            indexRequest.id(idAndDoc.getLeft());
+            if (!Strings.isNullOrEmpty(idAndDoc.getLeft()))
+                indexRequest.id(idAndDoc.getLeft());
             indexRequest.type(config.getTypeName());
             indexRequest.source(idAndDoc.getRight(), XContentType.JSON);
             IndexResponse indexResponse = client.index(indexRequest, RequestOptions.DEFAULT);

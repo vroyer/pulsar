@@ -32,6 +32,7 @@ import org.testng.annotations.Test;
 import java.util.Optional;
 
 import static org.testng.Assert.assertEquals;
+import static org.testng.Assert.assertNull;
 
 public class ElasticSearchExtractTests {
 
@@ -109,6 +110,13 @@ public class ElasticSearchExtractTests {
         Pair<String, String> pair2 = elasticSearchSink2.extractIdAndDocument(genericObjectRecord);
         assertEquals(pair2.getLeft(), "[\"1\",1]");
         assertEquals(pair2.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
+
+        // default config with null PK => indexed with auto generated _id
+        ElasticSearchSink elasticSearchSink3 = new ElasticSearchSink();
+        elasticSearchSink3.open(ImmutableMap.of("elasticSearchUrl", "http://localhost:9200"), null);
+        Pair<String, String> pair3 = elasticSearchSink3.extractIdAndDocument(genericObjectRecord);
+        assertNull(pair3.getLeft());
+        assertEquals(pair3.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
     }
 
     @Test
