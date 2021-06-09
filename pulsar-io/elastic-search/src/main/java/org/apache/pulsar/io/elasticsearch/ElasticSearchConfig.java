@@ -202,15 +202,15 @@ public class ElasticSearchConfig implements Serializable {
 
     @FieldDoc(
             required = false,
-            defaultValue = "false",
-            help = "Whether to ignore the record key to build the Elasticsearch document _id from the record value using the fields provided by the primaryFields parameter. If primaryFields is not defined, the connector use the unique pulsar messageId as the elasticsearch document id."
+            defaultValue = "true",
+            help = "Whether to ignore the record key to build the Elasticsearch document _id. If primaryFields is defined, the connector extract the primary fields from the payload to build the document _id. If no primaryFields are provided, elasticsearch auto generates a random document _id."
     )
-    private boolean keyIgnore = false;
+    private boolean keyIgnore = true;
 
     @FieldDoc(
             required = false,
             defaultValue = "id",
-            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id from the record value."
+            help = "The comma separated ordered list of field names used to build the Elasticsearch document _id from the record value. If this list is a singleton, the field is converted as a string. If this list has 2 or more fields, the generated _id is a string representation of a JSON array of the field values."
     )
     private String primaryFields = "";
 
@@ -218,10 +218,10 @@ public class ElasticSearchConfig implements Serializable {
 
     @FieldDoc(
             required = false,
-            defaultValue = "DELETE",
-            help = "How to handle records with null values, possible options are IGNORE, DELETE or FAIL. Default is DELETE the Elasticsearch document."
+            defaultValue = "IGNORE",
+            help = "How to handle records with null values, possible options are IGNORE, DELETE or FAIL. Default is IGNORE the message."
     )
-    private NullValueAction nullValueAction = NullValueAction.DELETE;
+    private NullValueAction nullValueAction = NullValueAction.IGNORE;
 
     @FieldDoc(
             required = false,
@@ -283,10 +283,6 @@ public class ElasticSearchConfig implements Serializable {
 
         if (indexNumberOfReplicas < 0) {
             throw new IllegalArgumentException("indexNumberOfReplicas must be a positive integer.");
-        }
-
-        if (keyIgnore && StringUtils.isEmpty(primaryFields ) && NullValueAction.DELETE.equals(nullValueAction)) {
-            throw new IllegalArgumentException("If keyIgnore is true and primaryFields is empty, nullValueAction cannot be DELETE.");
         }
 
         if (connectTimeoutInMs < 0) {
