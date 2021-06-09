@@ -36,16 +36,92 @@ import static org.testng.Assert.assertEquals;
 public class ElasticSearchExtractTests {
 
     @Test
-    public void testAVRO() throws Exception {
+    public void testValueAVRO() throws Exception {
         testGenericRecord(SchemaType.AVRO);
     }
 
     @Test
-    public void testJSON() throws Exception {
+    public void testValueJSON() throws Exception {
         testGenericRecord(SchemaType.JSON);
     }
 
     public void testGenericRecord(SchemaType schemaType) throws Exception {
+        RecordSchemaBuilder valueSchemaBuilder = org.apache.pulsar.client.api.schema.SchemaBuilder.record("value");
+        valueSchemaBuilder.field("c").type(SchemaType.STRING).optional().defaultValue(null);
+        valueSchemaBuilder.field("d").type(SchemaType.INT32).optional().defaultValue(null);
+        RecordSchemaBuilder udtSchemaBuilder = SchemaBuilder.record("type1");
+        udtSchemaBuilder.field("a").type(SchemaType.STRING).optional().defaultValue(null);
+        udtSchemaBuilder.field("b").type(SchemaType.BOOLEAN).optional().defaultValue(null);
+        udtSchemaBuilder.field("d").type(SchemaType.DOUBLE).optional().defaultValue(null);
+        udtSchemaBuilder.field("f").type(SchemaType.FLOAT).optional().defaultValue(null);
+        udtSchemaBuilder.field("i").type(SchemaType.INT32).optional().defaultValue(null);
+        udtSchemaBuilder.field("l").type(SchemaType.INT64).optional().defaultValue(null);
+        GenericSchema<GenericRecord> udtGenericSchema = GenericSchemaImpl.of(udtSchemaBuilder.build(schemaType));
+        valueSchemaBuilder.field("e", udtGenericSchema).type(schemaType).optional().defaultValue(null);
+        GenericSchema<GenericRecord> valueSchema = GenericSchemaImpl.of(valueSchemaBuilder.build(schemaType));
+
+        GenericRecord valueGenericRecord = valueSchema.newRecordBuilder()
+                .set("c", "1")
+                .set("d", 1)
+                .set("e", udtGenericSchema.newRecordBuilder()
+                        .set("a", "a")
+                        .set("b", true)
+                        .set("d", 1.0)
+                        .set("f", 1.0f)
+                        .set("i", 1)
+                        .set("l", 10L)
+                        .build())
+                .build();
+
+        Record<GenericObject> genericObjectRecord = new Record<GenericObject>() {
+            @Override
+            public Optional<String> getTopicName() {
+                return Optional.of("data-ks1.table1");
+            }
+
+            @Override
+            public org.apache.pulsar.client.api.Schema  getSchema() {
+                return valueSchema;
+            }
+
+            @Override
+            public GenericObject getValue() {
+                return valueGenericRecord;
+            }
+        };
+
+        // single field PK
+        ElasticSearchSink elasticSearchSink = new ElasticSearchSink();
+        elasticSearchSink.open(ImmutableMap.of(
+                "elasticSearchUrl", "http://localhost:9200",
+                "primaryFields","c",
+                "keyIgnore", "true"), null);
+        Pair<String, String> pair = elasticSearchSink.extractIdAndDocument(genericObjectRecord);
+        assertEquals(pair.getLeft(), "1");
+        assertEquals(pair.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
+
+        // two fields PK
+        ElasticSearchSink elasticSearchSink2 = new ElasticSearchSink();
+        elasticSearchSink2.open(ImmutableMap.of(
+                "elasticSearchUrl", "http://localhost:9200",
+                "primaryFields","c,d",
+                "keyIgnore", "true"), null);
+        Pair<String, String> pair2 = elasticSearchSink2.extractIdAndDocument(genericObjectRecord);
+        assertEquals(pair2.getLeft(), "[\"1\",1]");
+        assertEquals(pair2.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
+    }
+
+    @Test
+    public void testKeyValueAVRO() throws Exception {
+        testKeyValueGenericRecord(SchemaType.AVRO);
+    }
+
+    @Test
+    public void testKeyValueJSON() throws Exception {
+        testKeyValueGenericRecord(SchemaType.JSON);
+    }
+
+    public void testKeyValueGenericRecord(SchemaType schemaType) throws Exception {
         RecordSchemaBuilder keySchemaBuilder = org.apache.pulsar.client.api.schema.SchemaBuilder.record("key");
         keySchemaBuilder.field("a").type(SchemaType.STRING).optional().defaultValue(null);
         keySchemaBuilder.field("b").type(SchemaType.INT32).optional().defaultValue(null);
@@ -96,7 +172,6 @@ public class ElasticSearchExtractTests {
             }
         };
         Record<GenericObject> genericObjectRecord = new Record<GenericObject>() {
-
             @Override
             public Optional<String> getTopicName() {
                 return Optional.of("data-ks1.table1");
@@ -119,4 +194,6 @@ public class ElasticSearchExtractTests {
         assertEquals(pair.getLeft(), "[\"1\",1]");
         assertEquals(pair.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
     }
+
+
 }
