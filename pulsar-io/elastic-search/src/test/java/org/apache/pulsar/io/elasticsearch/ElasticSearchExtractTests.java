@@ -123,7 +123,9 @@ public class ElasticSearchExtractTests {
 
         // default config with null PK => indexed with auto generated _id
         ElasticSearchSink elasticSearchSink3 = new ElasticSearchSink();
-        elasticSearchSink3.open(ImmutableMap.of("elasticSearchUrl", "http://localhost:9200"), null);
+        elasticSearchSink3.open(ImmutableMap.of(
+                "elasticSearchUrl", "http://localhost:9200",
+                "schemaAware", "true"), null);
         Pair<String, String> pair3 = elasticSearchSink3.extractIdAndDocument(genericObjectRecord);
         assertNull(pair3.getLeft());
         assertEquals(pair3.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
@@ -223,14 +225,15 @@ public class ElasticSearchExtractTests {
         elasticSearchSink.open(ImmutableMap.of(
                 "elasticSearchUrl", "http://localhost:9200",
                 "schemaAware", "true",
-                "keyIgnore", "false"
-        ), null);
+                "keyIgnore", "false"), null);
         Pair<String, String> pair = elasticSearchSink.extractIdAndDocument(genericObjectRecord);
         assertEquals(pair.getLeft(), "[\"1\",1]");
         assertEquals(pair.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
 
         ElasticSearchSink elasticSearchSink2 = new ElasticSearchSink();
-        elasticSearchSink2.open(ImmutableMap.of("elasticSearchUrl", "http://localhost:9200"), null);
+        elasticSearchSink2.open(ImmutableMap.of(
+                "elasticSearchUrl", "http://localhost:9200",
+                "schemaAware", "true"), null);
         Pair<String, String> pair2 = elasticSearchSink2.extractIdAndDocument(genericObjectRecord);
         assertNull(pair2.getLeft());
         assertEquals(pair2.getRight(), "{\"c\":\"1\",\"d\":1,\"e\":{\"a\":\"a\",\"b\":true,\"d\":1.0,\"f\":1.0,\"i\":1,\"l\":10}}");
@@ -240,8 +243,7 @@ public class ElasticSearchExtractTests {
         elasticSearchSink3.open(ImmutableMap.of(
                 "elasticSearchUrl", "http://localhost:9200",
                 "schemaAware", "true",
-                "keyIgnore", "false"
-        ), null);
+                "keyIgnore", "false"), null);
         Pair<String, String> pair3 = elasticSearchSink.extractIdAndDocument(new Record<GenericObject>() {
             @Override
             public Optional<String> getTopicName() {
