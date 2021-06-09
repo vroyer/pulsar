@@ -144,7 +144,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
             Object value = null;
             Schema<?> keySchema = null;
             Schema<?> valueSchema = null;
-            if (record.getSchema() instanceof KeyValueSchema) {
+            if (record.getSchema() != null && record.getSchema() instanceof KeyValueSchema) {
                 KeyValueSchema<GenericObject, GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
                 keySchema = keyValueSchema.getKeySchema();
                 valueSchema = keyValueSchema.getValueSchema();
@@ -158,14 +158,8 @@ public class ElasticSearchSink implements Sink<GenericObject> {
             }
 
             String id = null;
-            if (elasticSearchConfig.isKeyIgnore() == false && key != null) {
-                if (keySchema != null) {
-                    id = stringifyKey(keySchema, key);
-                } else {
-                    key = record.getKey().orElse(null);
-                    valueSchema = record.getSchema();
-                    value = record.getValue();
-                }
+            if (elasticSearchConfig.isKeyIgnore() == false && key != null && keySchema != null) {
+                id = stringifyKey(keySchema, key);
             }
 
             String doc = null;
@@ -173,11 +167,16 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 if (valueSchema != null) {
                     doc = stringifyValue(valueSchema, value);
                 } else {
-                    doc = value.toString();
+                    if (value instanceof byte[]) {
+                        // for BWC with the ES-Sink
+                        doc = new String( (byte[]) value);
+                    } else {
+                        doc = value.toString();
+                    }
                 }
             }
 
-            if (elasticSearchConfig.isKeyIgnore() && !Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
+            if (doc != null && !Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
                 try {
                     // extract the PK from the JSON document
                     JsonNode jsonNode = objectMapper.readTree(doc);
@@ -185,6 +184,7 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                     id = stringifyKey(jsonNode, pkFields);
                 } catch (JsonProcessingException e) {
                     log.error("Failed to read JSON", e);
+                    throw e;
                 }
             }
 
