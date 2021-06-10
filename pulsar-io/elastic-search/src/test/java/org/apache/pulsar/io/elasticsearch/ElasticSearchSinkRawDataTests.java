@@ -83,7 +83,7 @@ public class ElasticSearchSinkRawDataTests {
 
         map = new HashMap<String, Object> ();
         map.put("elasticSearchUrl", "http://"+container.getHttpHostAddress());
-        map.put("schemaAware", "false");
+        map.put("schemaEnable", "false");
         sink = new ElasticSearchSink();
 
         mockRecord = mock(Record.class);

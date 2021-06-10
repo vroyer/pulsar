@@ -65,6 +65,13 @@ public class ElasticSearchConfig implements Serializable {
 
     @FieldDoc(
         required = false,
+        defaultValue = "false",
+        help = "Sets whether the Sink has to take into account the Schema or if it should simply copy the raw message to Elastichsearch"
+    )
+    private boolean schemaEnable = false;
+
+    @FieldDoc(
+        required = false,
         defaultValue = "1",
         help = "The number of shards of the index"
     )

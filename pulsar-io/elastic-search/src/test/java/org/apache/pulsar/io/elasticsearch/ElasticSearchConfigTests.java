@@ -86,9 +86,10 @@ public class ElasticSearchConfigTests {
         assertEquals(config.getConnectionIdleTimeoutInMs(), 5L);
         assertEquals(config.getSocketTimeoutInMs(), 60000);
 
-        assertEquals(config.isKeyIgnore(), false);
+        assertEquals(config.isSchemaEnable(), false);
+        assertEquals(config.isKeyIgnore(), true);
         assertEquals(config.getMalformedDocAction(), ElasticSearchConfig.MalformedDocAction.FAIL);
-        assertEquals(config.getNullValueAction(), ElasticSearchConfig.NullValueAction.DELETE);
+        assertEquals(config.getNullValueAction(), ElasticSearchConfig.NullValueAction.IGNORE);
 
         assertEquals(config.getMaxRetries(), -1);
         assertEquals(config.getMaxRetryTimeInSec(), 86400L);
@@ -185,17 +186,6 @@ public class ElasticSearchConfigTests {
         map.put("indexName", "myindex");
         map.put("password", "go-speedie-go");
 
-        ElasticSearchConfig config = ElasticSearchConfig.load(map);
-        config.validate();
-    }
-
-    @Test(expectedExceptions = IllegalArgumentException.class,
-            expectedExceptionsMessageRegExp = "If keyIgnore is true and primaryFields is empty, nullValueAction cannot be DELETE.")
-    public final void keyIgnorePrimaryFieldNullValueActionTest() throws IOException {
-        Map<String, Object> map = new HashMap<String, Object> ();
-        map.put("elasticSearchUrl", "http://localhost:90902");
-        map.put("keyIgnore", true);
-        map.put("nullValueAction", ElasticSearchConfig.NullValueAction.DELETE);
         ElasticSearchConfig config = ElasticSearchConfig.load(map);
         config.validate();
     }

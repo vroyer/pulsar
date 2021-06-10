@@ -142,65 +142,72 @@ public class ElasticSearchSink implements Sink<GenericObject> {
      * @return A pair for _id and _source
      */
     public Pair<String, String> extractIdAndDocument(Record<GenericObject> record) throws JsonProcessingException {
-        Object key = null;
-        GenericObject value = null;
-        Schema<?> keySchema = null;
-        Schema<?> valueSchema = null;
-        if (record.getSchema() != null && record.getSchema() instanceof KeyValueSchema) {
-            KeyValueSchema<GenericObject, GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
-            keySchema = keyValueSchema.getKeySchema();
-            valueSchema = keyValueSchema.getValueSchema();
-            KeyValue<GenericObject, GenericObject> keyValue = (KeyValue<GenericObject, GenericObject>) record.getValue().getNativeObject();
-            key = keyValue.getKey();
-            value = keyValue.getValue();
-        } else {
-            key = record.getKey().orElse(null);
-            valueSchema = record.getSchema();
-            value = record.getValue();
-        }
-
-        String id = null;
-        if (elasticSearchConfig.isKeyIgnore() == false && key != null && keySchema != null) {
-            id = stringifyKey(keySchema, key);
-        }
-
-        String doc = null;
-        if (value != null) {
-            if (valueSchema != null) {
-                doc = stringifyValue(valueSchema, value);
+        if (elasticSearchConfig.isSchemaEnable()) {
+            Object key = null;
+            GenericObject value = null;
+            Schema<?> keySchema = null;
+            Schema<?> valueSchema = null;
+            if (record.getSchema() != null && record.getSchema() instanceof KeyValueSchema) {
+                KeyValueSchema<GenericObject, GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
+                keySchema = keyValueSchema.getKeySchema();
+                valueSchema = keyValueSchema.getValueSchema();
+                KeyValue<GenericObject, GenericObject> keyValue = (KeyValue<GenericObject, GenericObject>) record.getValue().getNativeObject();
+                key = keyValue.getKey();
+                value = keyValue.getValue();
             } else {
-                if (value.getNativeObject() instanceof byte[]) {
-                    // for BWC with the ES-Sink
-                    doc = new String((byte[]) value.getNativeObject(), StandardCharsets.UTF_8);
+                key = record.getKey().orElse(null);
+                valueSchema = record.getSchema();
+                value = record.getValue();
+            }
+
+            String id = null;
+            if (elasticSearchConfig.isKeyIgnore() == false && key != null && keySchema != null) {
+                id = stringifyKey(keySchema, key);
+            }
+
+            String doc = null;
+            if (value != null) {
+                if (valueSchema != null) {
+                    doc = stringifyValue(valueSchema, value);
                 } else {
-                    doc = value.getNativeObject().toString();
+                    if (value.getNativeObject() instanceof byte[]) {
+                        // for BWC with the ES-Sink
+                        doc = new String((byte[]) value.getNativeObject(), StandardCharsets.UTF_8);
+                    } else {
+                        doc = value.getNativeObject().toString();
+                    }
                 }
             }
-        }
 
-        if (doc != null && primaryFields != null) {
-            try {
-                // extract the PK from the JSON document
-                JsonNode jsonNode = objectMapper.readTree(doc);
-                id = stringifyKey(jsonNode, primaryFields);
-            } catch (JsonProcessingException e) {
-                log.error("Failed to read JSON", e);
-                throw e;
+            if (doc != null && primaryFields != null) {
+                try {
+                    // extract the PK from the JSON document
+                    JsonNode jsonNode = objectMapper.readTree(doc);
+                    id = stringifyKey(jsonNode, primaryFields);
+                } catch (JsonProcessingException e) {
+                    log.error("Failed to read JSON", e);
+                    throw e;
+                }
             }
-        }
 
-        if (log.isDebugEnabled()) {
-            SchemaType schemaType = null;
-            if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
-                schemaType = record.getSchema().getSchemaInfo().getType();
+            if (log.isDebugEnabled()) {
+                SchemaType schemaType = null;
+                if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
+                    schemaType = record.getSchema().getSchemaInfo().getType();
+                }
+                log.debug("recordType={} schemaType={} id={} doc={}",
+                        record.getClass().getName(),
+                        schemaType,
+                        id,
+                        doc);
             }
-            log.debug("recordType={} schemaType={} id={} doc={}",
-                    record.getClass().getName(),
-                    schemaType,
-                    id,
-                    doc);
+            return Pair.of(id, doc);
+    } else {
+        return Pair.of(null, new String(
+                record.getMessage()
+                        .orElseThrow(() -> new IllegalArgumentException("Record does not carry message information"))
+                        .getData(), StandardCharsets.UTF_8));
         }
-        return Pair.of(id, doc);
     }
 
     public String stringifyKey(Schema<?> schema, Object val) throws JsonProcessingException {
