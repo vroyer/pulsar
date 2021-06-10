@@ -38,7 +38,7 @@ import org.apache.pulsar.client.api.SubscriptionInitialPosition;
 import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.impl.PulsarClientImpl;
 import org.apache.pulsar.client.impl.schema.AvroSchema;
-import org.apache.pulsar.client.impl.schema.KeyValueSchema;
+import org.apache.pulsar.client.impl.schema.KeyValueSchemaImpl;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.common.policies.data.FunctionStats;
 import org.apache.pulsar.common.policies.data.FunctionStatus;
@@ -2634,9 +2634,9 @@ public abstract class PulsarFunctionsTest extends PulsarFunctionsTestBase {
 
     private Schema getSchema(boolean jsonWithEnvelope) {
         if (jsonWithEnvelope) {
-            return KeyValueSchema.kvBytes();
+            return KeyValueSchemaImpl.kvBytes();
         } else {
-            return KeyValueSchema.of(Schema.AUTO_CONSUME(), Schema.AUTO_CONSUME(), KeyValueEncodingType.SEPARATED);
+            return KeyValueSchemaImpl.of(Schema.AUTO_CONSUME(), Schema.AUTO_CONSUME(), KeyValueEncodingType.SEPARATED);
         }
     }
 
