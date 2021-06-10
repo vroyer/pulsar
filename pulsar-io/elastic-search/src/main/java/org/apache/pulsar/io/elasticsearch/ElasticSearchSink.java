@@ -58,12 +58,16 @@ public class ElasticSearchSink implements Sink<GenericObject> {
     private ElasticSearchConfig elasticSearchConfig;
     private ElasticSearchClient elasticsearchClient;
     private ObjectMapper objectMapper = new ObjectMapper();
+    private List<String> primaryFields = null;
 
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
         elasticSearchConfig = ElasticSearchConfig.load(config);
         elasticSearchConfig.validate();
         elasticsearchClient = new ElasticSearchClient(elasticSearchConfig);
+        if (!Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
+            primaryFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
+        }
     }
 
     @Override
@@ -176,12 +180,11 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 }
             }
 
-            if (doc != null && !Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
+            if (doc != null && primaryFields != null) {
                 try {
                     // extract the PK from the JSON document
                     JsonNode jsonNode = objectMapper.readTree(doc);
-                    List<String> pkFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
-                    id = stringifyKey(jsonNode, pkFields);
+                    id = stringifyKey(jsonNode, primaryFields);
                 } catch (JsonProcessingException e) {
                     log.error("Failed to read JSON", e);
                     throw e;
