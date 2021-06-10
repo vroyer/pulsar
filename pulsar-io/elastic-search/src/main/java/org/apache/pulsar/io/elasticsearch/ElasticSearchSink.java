@@ -24,7 +24,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.base.Strings;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.codec.binary.Hex;
 import org.apache.commons.lang3.tuple.Pair;
 import org.apache.pulsar.client.api.Message;
 import org.apache.pulsar.client.api.PulsarClientException;
@@ -58,12 +57,16 @@ public class ElasticSearchSink implements Sink<GenericObject> {
     private ElasticSearchConfig elasticSearchConfig;
     private ElasticSearchClient elasticsearchClient;
     private ObjectMapper objectMapper = new ObjectMapper();
+    private List<String> primaryFields = null;
 
     @Override
     public void open(Map<String, Object> config, SinkContext sinkContext) throws Exception {
         elasticSearchConfig = ElasticSearchConfig.load(config);
         elasticSearchConfig.validate();
         elasticsearchClient = new ElasticSearchClient(elasticSearchConfig);
+        if (!Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
+            primaryFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
+        }
     }
 
     @Override
@@ -82,10 +85,12 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                 if (idAndDoc.getRight() == null) {
                     switch (elasticSearchConfig.getNullValueAction()) {
                         case DELETE:
-                            if (elasticSearchConfig.isBulkEnabled()) {
-                                elasticsearchClient.bulkDelete(record, idAndDoc.getLeft());
-                            } else {
-                                elasticsearchClient.deleteDocument(record, idAndDoc.getLeft());
+                            if (idAndDoc.getLeft() != null) {
+                                if (elasticSearchConfig.isBulkEnabled()) {
+                                    elasticsearchClient.bulkDelete(record, idAndDoc.getLeft());
+                                } else {
+                                    elasticsearchClient.deleteDocument(record, idAndDoc.getLeft());
+                                }
                             }
                             break;
                         case IGNORE:
@@ -101,8 +106,8 @@ public class ElasticSearchSink implements Sink<GenericObject> {
                         elasticsearchClient.indexDocument(record, idAndDoc);
                     }
                 }
-            } catch(JsonProcessingException jsonProcessingException) {
-                switch(elasticSearchConfig.getMalformedDocAction()) {
+            } catch (JsonProcessingException jsonProcessingException) {
+                switch (elasticSearchConfig.getMalformedDocAction()) {
                     case IGNORE:
                         break;
                     case WARN:
@@ -137,76 +142,65 @@ public class ElasticSearchSink implements Sink<GenericObject> {
      * @return A pair for _id and _source
      */
     public Pair<String, String> extractIdAndDocument(Record<GenericObject> record) throws JsonProcessingException {
-        if (elasticSearchConfig.isSchemaAware()) {
-            Object key = null;
-            Object value = null;
-            Schema<?> keySchema = null;
-            Schema<?> valueSchema = null;
-            if (record.getSchema() instanceof KeyValueSchema) {
-                KeyValueSchema<GenericObject, GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
-                keySchema = keyValueSchema.getKeySchema();
-                valueSchema = keyValueSchema.getValueSchema();
-                KeyValue<GenericObject, GenericObject> keyValue = (KeyValue<GenericObject, GenericObject>) record.getValue().getNativeObject();
-                key = keyValue.getKey();
-                value = keyValue.getValue();
-            } else {
-                key = record.getKey().orElse(null);
-                valueSchema = record.getSchema();
-                value = record.getValue();
-            }
-
-            String id = null;
-            if (key != null) {
-                if (keySchema != null) {
-                    id = stringifyKey(keySchema, key);
-                } else {
-                    id = key.toString();
-                }
-            }
-
-            String doc = null;
-            if (value != null) {
-                if (valueSchema != null) {
-                    doc = stringifyValue(valueSchema, value);
-                } else {
-                    doc = value.toString();
-                }
-            }
-
-            if (elasticSearchConfig.isKeyIgnore()) {
-                if (doc == null || Strings.isNullOrEmpty(elasticSearchConfig.getPrimaryFields())) {
-                    // use the messageId as the doc id in last resort.
-                    id = Hex.encodeHexString(record.getMessage().get().getMessageId().toByteArray());
-                } else {
-                    try {
-                        // extract the PK from the JSON document
-                        JsonNode jsonNode = objectMapper.readTree(doc);
-                        List<String> pkFields = Arrays.asList(elasticSearchConfig.getPrimaryFields().split(","));
-                        id = stringifyKey(jsonNode, pkFields);
-                    } catch (JsonProcessingException e) {
-                        log.error("Failed to read JSON", e);
-                    }
-                }
-            }
-
-            if (log.isDebugEnabled()) {
-                SchemaType schemaType = null;
-                if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
-                    schemaType = record.getSchema().getSchemaInfo().getType();
-                }
-                log.debug("recordType={} schemaType={} id={} doc={}",
-                        record.getClass().getName(),
-                        schemaType,
-                        id,
-                        doc);
-            }
-            return Pair.of(id, doc);
+        Object key = null;
+        GenericObject value = null;
+        Schema<?> keySchema = null;
+        Schema<?> valueSchema = null;
+        if (record.getSchema() != null && record.getSchema() instanceof KeyValueSchema) {
+            KeyValueSchema<GenericObject, GenericObject> keyValueSchema = (KeyValueSchema) record.getSchema();
+            keySchema = keyValueSchema.getKeySchema();
+            valueSchema = keyValueSchema.getValueSchema();
+            KeyValue<GenericObject, GenericObject> keyValue = (KeyValue<GenericObject, GenericObject>) record.getValue().getNativeObject();
+            key = keyValue.getKey();
+            value = keyValue.getValue();
         } else {
-            return Pair.of(null, new String(
-                    record.getMessage()
-                            .orElseThrow(() -> new IllegalArgumentException("Record does not carry message information"))
-                            .getData(), StandardCharsets.UTF_8));
+            key = record.getKey().orElse(null);
+            valueSchema = record.getSchema();
+            value = record.getValue();
         }
+
+        String id = null;
+        if (elasticSearchConfig.isKeyIgnore() == false && key != null && keySchema != null) {
+            id = stringifyKey(keySchema, key);
+        }
+
+        String doc = null;
+        if (value != null) {
+            if (valueSchema != null) {
+                doc = stringifyValue(valueSchema, value);
+            } else {
+                if (value.getNativeObject() instanceof byte[]) {
+                    // for BWC with the ES-Sink
+                    doc = new String((byte[]) value.getNativeObject(), StandardCharsets.UTF_8);
+                } else {
+                    doc = value.getNativeObject().toString();
+                }
+            }
+        }
+
+        if (doc != null && primaryFields != null) {
+            try {
+                // extract the PK from the JSON document
+                JsonNode jsonNode = objectMapper.readTree(doc);
+                id = stringifyKey(jsonNode, primaryFields);
+            } catch (JsonProcessingException e) {
+                log.error("Failed to read JSON", e);
+                throw e;
+            }
+        }
+
+        if (log.isDebugEnabled()) {
+            SchemaType schemaType = null;
+            if (record.getSchema() != null && record.getSchema().getSchemaInfo() != null) {
+                schemaType = record.getSchema().getSchemaInfo().getType();
+            }
+            log.debug("recordType={} schemaType={} id={} doc={}",
+                    record.getClass().getName(),
+                    schemaType,
+                    id,
+                    doc);
+        }
+        return Pair.of(id, doc);
     }
 
     public String stringifyKey(Schema<?> schema, Object val) throws JsonProcessingException {
