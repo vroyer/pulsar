@@ -19,6 +19,7 @@
 package org.apache.pulsar.io.elasticsearch;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.NullNode;
 import com.google.common.collect.ImmutableMap;
 import org.apache.avro.LogicalTypes;
 import org.apache.avro.Schema;
@@ -40,6 +41,7 @@ public class JsonConverterTests {
     @Test
     public void testAvroToJson() throws IOException {
         Schema schema = SchemaBuilder.record("record").fields()
+                .name("n").type().longType().longDefault(10)
                 .name("l").type().longType().longDefault(10)
                 .name("i").type().intType().intDefault(10)
                 .name("b").type().booleanType().booleanDefault(true)
@@ -51,6 +53,7 @@ public class JsonConverterTests {
                 .name("map").type().optional().map().values(SchemaBuilder.builder().intType())
                 .endRecord();
         GenericRecord genericRecord = new GenericData.Record(schema);
+        genericRecord.put("n", null);
         genericRecord.put("l", 1L);
         genericRecord.put("i", 1);
         genericRecord.put("b", true);
@@ -61,6 +64,7 @@ public class JsonConverterTests {
         genericRecord.put("array", new String[] {"toto"});
         genericRecord.put("map", ImmutableMap.of("a",10));
         JsonNode jsonNode = JsonConverter.toJson(genericRecord);
+        assertEquals(jsonNode.get("n"), NullNode.getInstance());
         assertEquals(jsonNode.get("l").asLong(), 1L);
         assertEquals(jsonNode.get("i").asInt(), 1);
         assertEquals(jsonNode.get("b").asBoolean(), true);

@@ -42,6 +42,7 @@ import org.apache.pulsar.io.core.annotations.IOType;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 
@@ -253,7 +254,21 @@ public class ElasticSearchSink implements Sink<GenericObject> {
 
     public String stringifyValue(Schema<?> schema, Object val) throws JsonProcessingException {
         JsonNode jsonNode = extractJsonNode(schema, val);
-        return objectMapper.writeValueAsString(jsonNode);
+        return elasticSearchConfig.isStripNulls()
+                ? objectMapper.writeValueAsString(stripNullNodes(jsonNode))
+                : objectMapper.writeValueAsString(jsonNode);
+    }
+
+    public static JsonNode stripNullNodes(JsonNode node) {
+        Iterator<JsonNode> it = node.iterator();
+        while (it.hasNext()) {
+            JsonNode child = it.next();
+            if (child.isNull())
+                it.remove();
+            else
+                stripNullNodes(child);
+        }
+        return node;
     }
 
     public static JsonNode extractJsonNode(Schema<?> schema, Object val) {

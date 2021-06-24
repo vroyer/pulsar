@@ -224,6 +224,32 @@ public class ElasticSearchSinkTests {
         }
     }
 
+    @Test(enabled = true)
+    public void testStripNullNodes() throws Exception {
+        map.put("stripNulls", true);
+        sink.open(map, mockSinkContext);
+        GenericRecord genericRecord = genericSchema.newRecordBuilder()
+                .set("name", null)
+                .set("userName", "boby")
+                .set("email", null)
+                .build();
+        String json = sink.stringifyValue(valueSchema, genericRecord);
+        assertEquals(json, "{\"userName\":\"boby\"}");
+    }
+
+    @Test(enabled = true)
+    public void testKeepNullNodes() throws Exception {
+        map.put("stripNulls", false);
+        sink.open(map, mockSinkContext);
+        GenericRecord genericRecord = genericSchema.newRecordBuilder()
+                .set("name", null)
+                .set("userName", "boby")
+                .set("email", null)
+                .build();
+        String json = sink.stringifyValue(valueSchema, genericRecord);
+        assertEquals(json, "{\"name\":null,\"userName\":\"boby\",\"email\":null}");
+    }
+
     @Test(enabled = true, expectedExceptions = PulsarClientException.InvalidMessageException.class)
     public void testNullValueFailure() throws Exception {
         String index = "testnullvaluefail";

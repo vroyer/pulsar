@@ -230,6 +230,13 @@ public class ElasticSearchConfig implements Serializable {
     )
     private MalformedDocAction malformedDocAction = MalformedDocAction.FAIL;
 
+    @FieldDoc(
+            required = false,
+            defaultValue = "true",
+            help = "If stripNulls is false, elasticsearch _source includes 'null' for empty fields (for example {\"foo\": null}), otherwise null fields are stripped."
+    )
+    private boolean stripNulls = true;
+
     public enum MalformedDocAction {
         IGNORE,
         WARN,
