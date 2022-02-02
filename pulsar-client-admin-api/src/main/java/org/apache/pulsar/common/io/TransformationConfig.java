@@ -16,32 +16,29 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-package org.apache.pulsar.io.core;
+package org.apache.pulsar.common.io;
 
-import org.apache.pulsar.functions.api.Record;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.apache.pulsar.common.functions.FunctionConfig;
+import org.apache.pulsar.common.functions.ProducerConfig;
+import org.apache.pulsar.common.functions.Resources;
 
-import java.io.Closeable;
 import java.util.Map;
-import java.util.function.Predicate;
 
 /**
- * Applies the transformation if the predicate is true.
- * @param <T>
+ * Pulsar source configuration.
  */
-public interface Transformation<T> extends Predicate<Record<T>>, Closeable {
+@Data
+@Builder(toBuilder = true)
+@NoArgsConstructor
+@AllArgsConstructor
+public class TransformationConfig
+{
+    private String name;
+    private String className;
 
-    enum Type {
-        KEY,
-        VALUE;
-    }
-
-    Type type();
-
-    void init(final Map<String, Object> config) throws Exception;
-
-    Record<T> apply(Record<T> record);
-
-    /** Signal that this transformation instance will no longer will be used. **/
-    @Override
-    void close();
+    private Map<String, Object> config;
 }

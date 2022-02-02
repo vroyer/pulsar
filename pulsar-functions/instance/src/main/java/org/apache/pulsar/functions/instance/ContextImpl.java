@@ -23,13 +23,7 @@ import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import io.prometheus.client.Summary;
 import java.nio.ByteBuffer;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -55,6 +49,7 @@ import org.apache.pulsar.client.api.SubscriptionType;
 import org.apache.pulsar.client.api.TypedMessageBuilder;
 import org.apache.pulsar.client.impl.MultiTopicsConsumerImpl;
 import org.apache.pulsar.client.impl.ProducerBuilderImpl;
+import org.apache.pulsar.common.io.TransformationConfig;
 import org.apache.pulsar.common.naming.TopicName;
 import org.apache.pulsar.common.util.FutureUtil;
 import org.apache.pulsar.functions.api.Context;
@@ -108,6 +103,8 @@ class ContextImpl implements Context, SinkContext, SourceContext, AutoCloseable 
     DefaultStateStore defaultStateStore;
 
     private Map<String, Object> userConfigs;
+
+    private List<TransformationConfig> transformationConfigs;
 
     private ComponentStatsManager statsManager;
 
@@ -176,6 +173,13 @@ class ContextImpl implements Context, SinkContext, SourceContext, AutoCloseable 
         } else {
             userConfigs = new Gson().fromJson(config.getFunctionDetails().getUserConfig(),
                     new TypeToken<Map<String, Object>>() {
+                    }.getType());
+        }
+        if (config.getFunctionDetails().getTransformationConfigs().isEmpty()) {
+            transformationConfigs = new ArrayList<>(0);
+        } else {
+            transformationConfigs = new Gson().fromJson(config.getFunctionDetails().getTransformationConfigs(),
+                    new TypeToken<List<TransformationConfig>>() {
                     }.getType());
         }
         this.secretsProvider = secretsProvider;
@@ -341,6 +345,17 @@ class ContextImpl implements Context, SinkContext, SourceContext, AutoCloseable 
     @Override
     public Map<String, Object> getUserConfigMap() {
         return userConfigs;
+    }
+
+    @Override
+    public List<TransformationConfig> getTransformationConfigs() {
+        return transformationConfigs;
+    }
+
+    @Override
+    public Optional<TransformationConfig> getTransformationConfig(Integer index)
+    {
+        return index < transformationConfigs.size() ? Optional.of(transformationConfigs.get(index)) : Optional.empty();
     }
 
     @Override

@@ -18,6 +18,7 @@
  */
 package org.apache.pulsar.common.io;
 
+import java.util.List;
 import java.util.Map;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -47,6 +48,8 @@ public class SourceConfig {
     private String serdeClassName;
 
     private String schemaType;
+
+    private List<TransformationConfig> transformations;
 
     private Map<String, Object> configs;
     // This is a map of secretName(aka how the secret is going to be

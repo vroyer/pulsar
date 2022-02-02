@@ -23,11 +23,10 @@ import static org.apache.pulsar.functions.utils.FunctionCommon.convertFromFuncti
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.common.base.Preconditions;
 
+import com.google.gson.Gson;
 import com.scurrilous.circe.checksum.Crc32cIntChecksum;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
@@ -48,6 +47,7 @@ import org.apache.pulsar.client.impl.PulsarClientImpl;
 import org.apache.pulsar.common.functions.ConsumerConfig;
 import org.apache.pulsar.common.functions.FunctionConfig;
 import org.apache.pulsar.common.functions.ProducerConfig;
+import org.apache.pulsar.common.io.TransformationConfig;
 import org.apache.pulsar.common.util.ObjectMapperFactory;
 import org.apache.pulsar.common.util.Reflections;
 import org.apache.pulsar.functions.api.Function;
@@ -138,6 +138,8 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
     // a read write lock for stats operations
     private ReadWriteLock statsLock = new ReentrantReadWriteLock();
 
+    private final List<Transformation> transformations = new ArrayList<>();
+
     public JavaInstanceRunnable(InstanceConfig instanceConfig,
                                 ClientBuilder clientBuilder,
                                 PulsarClient pulsarClient,
@@ -226,6 +228,8 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
         setupInput(contextImpl);
         // start any log topic handler
         setupLogHandler();
+        // initialize transformation
+        setupTransformations(contextImpl);
 
         javaInstance = new JavaInstance(contextImpl, object, instanceConfig);
 
@@ -624,6 +628,14 @@ public class JavaInstanceRunnable implements AutoCloseable, Runnable {
         }
         config.getRootLogger().removeAppender(logAppender.getName());
         context.updateLoggers();
+    }
+
+    private void setupTransformations(ContextImpl contextImpl) throws Exception {
+        for(TransformationConfig transformationConfig : contextImpl.getTransformationConfigs()) {
+            Transformation transformation = (Transformation) Class.forName(transformationConfig.getClassName()).getDeclaredConstructor().newInstance();
+            transformation.init(transformationConfig.getConfig());
+            transformations.add(transformation);
+        }
     }
 
     private void setupInput(ContextImpl contextImpl) throws Exception {
