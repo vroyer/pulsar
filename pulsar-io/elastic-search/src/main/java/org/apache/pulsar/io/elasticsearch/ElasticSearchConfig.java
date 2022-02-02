@@ -244,6 +244,13 @@ public class ElasticSearchConfig implements Serializable {
     )
     private boolean stripNulls = true;
 
+    @FieldDoc(
+            required = false,
+            defaultValue = "false",
+            help = "When the message key schema is AVRO or JSON, copy the primary key fields into the Elasticsearch _source."
+    )
+    private boolean copyPkFields = false;
+
     public enum MalformedDocAction {
         IGNORE,
         WARN,

@@ -90,6 +90,7 @@ public class ElasticSearchConfigTests {
         assertEquals(config.getSocketTimeoutInMs(), 60000);
 
         assertEquals(config.isStripNulls(), true);
+        assertEquals(config.isCopyPkFields(), false);
         assertEquals(config.isSchemaEnable(), false);
         assertEquals(config.isKeyIgnore(), true);
         assertEquals(config.getMalformedDocAction(), ElasticSearchConfig.MalformedDocAction.FAIL);
